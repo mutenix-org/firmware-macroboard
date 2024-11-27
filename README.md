@@ -14,11 +14,11 @@ The buttons are ordered in the following way:
 
 ```
 +---+
-| o |   Button 1
-| o |   Button 2
-| o |   Button 3
-| o |   Button 4
-| o |   Button 5
+| o |   Button 1, buttons[0]
+| o |   Button 2, buttons[1]
+| o |   Button 3, buttons[2]
+| o |   Button 4, buttons[3]
+| o |   Button 5, buttons[4]
 |   |
 +---+
 ```

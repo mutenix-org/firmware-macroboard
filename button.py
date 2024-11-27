@@ -4,8 +4,9 @@ from utils import EventTime
 
 DOUBLETAP_TIME_MS = 200
 
+
 class Button:
-    def __init__(self, id:int, pin=board.GP1):
+    def __init__(self, id: int, pin=board.GP1):
         self._pin = digitalio.DigitalInOut(pin)
         self._pin.direction = digitalio.Direction.INPUT
         self._pin.pull = digitalio.Pull.UP
@@ -22,7 +23,7 @@ class Button:
     @property
     def state(self):
         return self._state
-    
+
     @property
     def id(self):
         return self._id
@@ -48,8 +49,6 @@ class Button:
                 if not self._press_handled:
                     self._triggered = True
         return self._pressed
-    
-
 
     @property
     def triggered(self):
@@ -66,12 +65,12 @@ class Button:
     def released(self):
         retval = self._released
         return retval
-    
+
     @property
     def changed_state(self):
         retval = self._changed_state
         self._changed_state = False
         return retval
-    
+
     def handled(self):
         self._press_handled = True

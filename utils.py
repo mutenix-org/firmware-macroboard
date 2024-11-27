@@ -1,5 +1,6 @@
 import time
 
+
 class EventTime:
     def __init__(self, name=None):
         self.name = name

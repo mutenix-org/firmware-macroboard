@@ -3,6 +3,7 @@ import board
 import digitalio
 import time
 
+
 class ColorLeds:
     blue = bytearray([0, 0, 10, 0])
     purple = bytearray([0, 10, 10, 0])
@@ -15,10 +16,10 @@ class ColorLeds:
         self.pin.direction = digitalio.Direction.OUTPUT
         self.colors = bytearray(count*4)
         self.count = count
-        
+
     def __getitem__(self, key):
         return self.colors[key*4:key*4+4]
-    
+
     def __setitem__(self, key, value):
         if not isinstance(value, (bytes, bytearray)):
             raise ValueError("Value must be a bytes or bytearray object")
@@ -36,7 +37,7 @@ class Rainbow:
         self._start = start
         self._end = end
         self._time = time.monotonic()
-        
+
     def next(self):
         if time.monotonic() - self._time < self.speed:
             return
@@ -44,11 +45,11 @@ class Rainbow:
         self._hue = (self._hue + self.speed) % 1
         for i in range(self._start, self._end+1):
             self.led[i] = self._color(i)
-            
+
     def _color(self, i):
         r, g, b = self._hsv_to_rgb(self._hue, 1, 1)
         return bytearray([int(g*10), int(r*10), int(b*10), 0])
-    
+
     def _hsv_to_rgb(self, h, s, v):
         i = int(h * 6)
         f = (h * 6) - i

@@ -1,5 +1,6 @@
 import version as v
 from button import Button
+from hardware import HW_VERSION
 
 OUT_REPORT_LENGTH = 8
 
@@ -55,7 +56,7 @@ class InMessage:
 
     @classmethod
     def initialize(cls):
-        return cls([cls.INITIALIZE, v.MAJOR, v.MINOR, v.PATCH])
+        return cls([cls.INITIALIZE, v.MAJOR, v.MINOR, v.PATCH, HW_VERSION])
 
     @classmethod
     def button(cls, button: Button):

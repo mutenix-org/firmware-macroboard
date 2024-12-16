@@ -8,6 +8,7 @@ class ColorLeds:
     blue = bytearray([0, 0, 10, 0])
     purple = bytearray([0, 10, 10, 0])
     red = bytearray([0, 10, 0, 0])
+    green = bytearray([10, 00, 0, 0])
     yellow = bytearray([10, 10, 0, 0])
     off = bytearray([0, 0, 0, 0])
 

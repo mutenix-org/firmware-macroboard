@@ -4,11 +4,18 @@ from leds import ColorLeds, Rainbow
 from protocol import InMessage, OutMessage, Ping, SetColor, Unknown
 import microcontroller
 from mybuttons import buttons
+import debug_on
 
 COMBO_ACTIVATION_TIME = 500_000_000
+COMMUNICATION_TIMEOUT = 5.5
 
 macropad = usb_hid.devices[0]
 led = ColorLeds()
+
+
+def log(*args, **kwargs):
+    if debug_on.debug:
+        print(*args, **kwargs)
 
 
 def do_reset():
@@ -21,17 +28,17 @@ combo_matched_time = {}
 
 
 def handle_received_report(data):
-    print("Data received")
+    log("Data received")
     p = OutMessage.from_buffer(data)
     if isinstance(p, Ping):
         InMessage.initialize().send(macropad)
-        print("ping")
+        log("ping")
     elif isinstance(p, SetColor):
-        if p.buttonid < 5 and p.buttonid >= 0:
-            led[5-p.buttonid] = p.color
-        print(f"led {p.buttonid} set to {p.color}")
+        if p.buttonid < 6 and p.buttonid >= 1:
+            led[6-p.buttonid] = p.color
+        log(f"led {p.buttonid} set to {p.color}")
     elif isinstance(p, Unknown):
-        print(f"Unknown message {p.data}")
+        log(f"Unknown message {p.data}")
 
 
 class Combos:
@@ -61,19 +68,21 @@ while True:
     data = macropad.get_last_received_report()
     try:
         if data:
+            log('data', data)
             last_communication = time.monotonic()
             handle_received_report(data)
+            led[0] = ColorLeds.green
 
-        if (time.monotonic() - last_communication) > 1:
+        if (time.monotonic() - last_communication) > COMMUNICATION_TIMEOUT:
             led[0] = ColorLeds.purple
             rainbow.next()
 
         for b in buttons:
             b.read()
             if b.changed_state:
-                print(f"Button {b._pin} changed, send status")
+                log(f"Button {b._pin} changed, send status")
                 InMessage.button(b).send(macropad)
         combos.check()
 
     except OSError as e:
-        print(f"USB send not working, but who cares {e}")
+        log(f"USB send not working, but who cares {e}")

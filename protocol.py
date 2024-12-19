@@ -8,6 +8,8 @@ OUT_REPORT_LENGTH = 8
 class OutMessage:
     SETCOLOR = 0x1
     PING = 0xF0
+    PREPARE_UPDATE = 0xE0
+    RESET = 0xE1
 
     @classmethod
     def from_buffer(cls, buffer):
@@ -16,6 +18,10 @@ class OutMessage:
             return Ping(buffer[1:OUT_REPORT_LENGTH])
         elif type == cls.SETCOLOR:
             return SetColor(buffer[1:OUT_REPORT_LENGTH])
+        elif type == cls.PREPARE_UPDATE:
+            return PrepareUpdate()
+        elif type == cls.RESET:
+            return Reset()
         return Unknown(buffer[0:OUT_REPORT_LENGTH])
 
 
@@ -46,6 +52,15 @@ class SetColor(OutMessage):
     def buttonid(self):
         return self._buttonid
 
+
+class PrepareUpdate(OutMessage):
+    def __init__(self):
+        pass
+
+
+class Reset(OutMessage):
+    def __init__(self):
+        pass
 
 class InMessage:
     INITIALIZE = 0x99

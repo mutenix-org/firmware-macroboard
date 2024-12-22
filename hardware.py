@@ -29,5 +29,3 @@ elif board.board_id == "supermini_nrf52840":
         HW_VERSION = TEN_BUTTON_BT
     else:
         HW_VERSION = FIVE_BUTTON_BT
-
-    

@@ -23,7 +23,7 @@ MACROBOARD_DESCRIPTOR2 = bytes((
     0x95, OUT_REPORT_LENGTH,  # ReportCount
     0x75, 0x08,               # ReportSize(8 bit)
     0x91, 0x02,               # input
-    
+
     0x85, 0x02,               # ReportId(2)
     0x09, 0x02,               # UsageId(Update)
     0x15, 0x00,               # LogicalMinimum(0)
@@ -31,7 +31,7 @@ MACROBOARD_DESCRIPTOR2 = bytes((
     0x95, 0x24,               # ReportCount
     0x75, 0x08,               # ReportSize(8 bit)
     0x81, 0x02,               # InReport (Outgoing from this device, into host)
-    
+
     0x85, 0x02,               # ReportId(2)
     0x09, 0x02,               # UsageId(Update)
     0x15, 0x00,               # LogicalMinimum(0)
@@ -39,7 +39,7 @@ MACROBOARD_DESCRIPTOR2 = bytes((
     0x96, 0x60, 0x00,               # ReportCount
     0x75, 0x08,               # ReportSize(8 bit)
     0x91, 0x02,               # input
-    
+
     0xC0,                     # End Collection
 ))
 

@@ -51,4 +51,3 @@ elif hardware.HW_VERSION == hardware.FIVE_BUTTON_BT or hardware.HW_VERSION == ha
             Button(9, board.P0_29),
             Button(10, board.P0_31),
         ])
-

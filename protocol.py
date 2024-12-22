@@ -77,7 +77,7 @@ class InMessage:
     @classmethod
     def button(cls, button: Button):
         return cls([cls.STATUS, button.id, button.triggered, button.doubletapped, button.pressed, button.released])
-    
+
     @classmethod
     def status_request(cls):
         return cls([cls.STATUS_REQUEST])

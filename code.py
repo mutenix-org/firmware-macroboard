@@ -39,7 +39,7 @@ def do_reset():
 
 
 last_communication = 0
-rainbow = Rainbow(led, 1, 2)
+rainbow = Rainbow(led, 1, 5, 0.025)
 combo_matched_time = {}
 
 
@@ -135,7 +135,7 @@ while True:
 
     except OSError as e:
         log(f"USB send not working, but who cares {e}")
-        
+
     if update_mode:
         do_update(led)
         update_mode = False

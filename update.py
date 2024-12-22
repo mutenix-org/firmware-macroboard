@@ -48,10 +48,10 @@ class FileTransport:
             "little",
         )
         return filename, total_size
-    
+
     def is_end(self):
         return self.type_ == FILE_TRANSPORT_END
-    
+
     def is_finish(self):
         return self.type_ == FILE_TRANSPORT_FINISH
 
@@ -108,7 +108,7 @@ class LedStatus:
                 self.led[i] = bytearray((10 - self.led_status % 10, self.led_status % 10, 0, 0))
             if self.led_status // 10 == (i - 1 + 5):
                 self.led[i] = bytearray((self.led_status % 10, 10 - self.led_status % 10, 0, 0))
-            
+
 
 def do_update(led):
     try:
@@ -141,7 +141,7 @@ def do_update(led):
             if not ft.is_valid():
                 print("Invalid data")
                 continue
-            
+
             last_transfer = time.monotonic()
             led_status.update()
             requested = False

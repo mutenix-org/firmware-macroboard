@@ -2,13 +2,10 @@ import storage
 import usb_hid
 import myhid
 import supervisor
-import microcontroller
 import usb_cdc
 from mybuttons import buttons
 from mode import device_mode
 from debug_on import debug
-import hardware
-
 
 supervisor.set_usb_identification("m42e.de", "macropad", pid=8323)
 usb_hid.enable(

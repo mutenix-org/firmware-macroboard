@@ -1,5 +1,4 @@
 import neopixel_write
-import board
 import digitalio
 import time
 

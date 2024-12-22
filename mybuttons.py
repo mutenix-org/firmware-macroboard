@@ -1,5 +1,4 @@
 import board
-import os
 import digitalio
 from button import Button
 import hardware

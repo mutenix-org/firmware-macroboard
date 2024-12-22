@@ -38,9 +38,8 @@ def do_reset():
     microcontroller.reset()
 
 
-last_communication = 0
+last_communication: float = 0.0
 rainbow = Rainbow(led, 1, 5, 0.025)
-combo_matched_time = {}
 
 
 def handle_received_report(data):

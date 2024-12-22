@@ -1,4 +1,3 @@
-import board
 import digitalio
 from utils import EventTime
 

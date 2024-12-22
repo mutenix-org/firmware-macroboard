@@ -33,7 +33,7 @@ class FileTransport:
             FILE_TRANSPORT_FINISH,
         ]
 
-    def as_start(self) -> (str, int):
+    def as_start(self) -> tuple[str, int]:
         if self.type_ != FILE_TRANSPORT_START:
             raise ValueError("Not a start packet")
         filename_length = self.content[0]

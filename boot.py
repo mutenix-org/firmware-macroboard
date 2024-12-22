@@ -1,8 +1,8 @@
-import storage
-import usb_hid
+import storage # type: ignore
+import usb_hid # type: ignore
 import myhid
-import supervisor
-import usb_cdc
+import supervisor # type: ignore
+import usb_cdc # type: ignore
 from mybuttons import buttons
 from mode import device_mode
 from debug_on import debug

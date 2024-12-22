@@ -1,4 +1,4 @@
-import digitalio
+import digitalio # type: ignore
 from utils import EventTime
 
 DOUBLETAP_TIME_MS = 200

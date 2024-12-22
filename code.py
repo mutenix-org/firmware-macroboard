@@ -1,10 +1,10 @@
-import board
+import board # type: ignore
 import debug_on
 import hardware
-import microcontroller
+import microcontroller # type: ignore
 import myhid
 import time
-import usb_hid
+import usb_hid # type: ignore
 
 from leds import ColorLeds, Rainbow
 from mybuttons import buttons

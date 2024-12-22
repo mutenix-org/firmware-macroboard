@@ -1,5 +1,5 @@
-import board
-import digitalio
+import board # type: ignore
+import digitalio # type: ignore
 from button import Button
 import hardware
 

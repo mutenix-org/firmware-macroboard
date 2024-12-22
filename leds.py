@@ -1,5 +1,5 @@
-import neopixel_write
-import digitalio
+import neopixel_write # type: ignore
+import digitalio # type: ignore
 import time
 
 

@@ -1,7 +1,7 @@
-import supervisor
+import supervisor # type: ignore
 import time
-import usb_hid
-import storage
+import usb_hid # type: ignore
+import storage # type: ignore
 
 FILE_TRANSPORT_START = 1
 FILE_TRANSPORT_DATA = 2

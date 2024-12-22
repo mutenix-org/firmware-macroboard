@@ -1,20 +1,32 @@
-import usb_hid
-import time
-from leds import ColorLeds, Rainbow
-from protocol import InMessage, OutMessage, Ping, PrepareUpdate, SetColor, Unknown, Reset
-import microcontroller
-from mybuttons import buttons
+import board
 import debug_on
-from update import do_update
+import hardware
+import microcontroller
 import myhid
+import time
+import usb_hid
+
+from leds import ColorLeds, Rainbow
+from mybuttons import buttons
+from protocol import InMessage, OutMessage, Ping, PrepareUpdate, SetColor, Unknown, Reset
+from update import do_update
 
 COMBO_ACTIVATION_TIME = 500_000_000
 COMMUNICATION_TIMEOUT = 5.5
 
 update_mode = False
-
 macropad = usb_hid.devices[0]
-led = ColorLeds()
+
+if hardware.HW_VERSION == hardware.FIVE_BUTTON_USB:
+    led_pin = board.GP7
+    led_count = 6
+elif hardware.HW_VERSION == hardware.TEN_BUTTON_USB_V2 or hardware.HW_VERSION == hardware.FIVE_BUTTON_USB_V2:
+    led_pin = board.GP15
+    led_count = 13
+elif hardware.HW_VERSION == hardware.FIVE_BUTTON_BT or hardware.HW_VERSION == hardware.TEN_BUTTON_BT:
+    led_pin = board.P0_20
+    led_count = 13
+led = ColorLeds(led_pin, led_count)
 
 
 def log(*args, **kwargs):
@@ -27,7 +39,7 @@ def do_reset():
 
 
 last_communication = 0
-rainbow = Rainbow(led, 1, 5)
+rainbow = Rainbow(led, 1, 2)
 combo_matched_time = {}
 
 
@@ -103,6 +115,8 @@ while True:
     try:
         if data:
             log('data', data)
+            if last_communication == 0:
+                InMessage.status_request().send(macropad)
             last_communication = time.monotonic()
             handle_received_report(data)
             led[0] = ColorLeds.green
@@ -110,6 +124,7 @@ while True:
         if (time.monotonic() - last_communication) > COMMUNICATION_TIMEOUT:
             led[0] = ColorLeds.purple
             rainbow.next()
+            last_communication = 0
 
         for b in buttons:
             b.read()

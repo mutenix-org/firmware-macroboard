@@ -12,7 +12,7 @@ class ColorLeds:
     yellow = bytearray([10, 10, 0, 0])
     off = bytearray([0, 0, 0, 0])
 
-    def __init__(self, pin=board.GP7, count=6):
+    def __init__(self, pin=None, count=6):
         self.pin = digitalio.DigitalInOut(pin)
         self.pin.direction = digitalio.Direction.OUTPUT
         self.colors = bytearray(count*4)

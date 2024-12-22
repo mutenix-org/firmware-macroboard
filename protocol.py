@@ -65,6 +65,7 @@ class Reset(OutMessage):
 class InMessage:
     INITIALIZE = 0x99
     STATUS = 0x1
+    STATUS_REQUEST = 0x2
 
     def __init__(self, data):
         self._data = bytearray(data + [0] * (OUT_REPORT_LENGTH - len(data)))
@@ -76,6 +77,10 @@ class InMessage:
     @classmethod
     def button(cls, button: Button):
         return cls([cls.STATUS, button.id, button.triggered, button.doubletapped, button.pressed, button.released])
+    
+    @classmethod
+    def status_request(cls):
+        return cls([cls.STATUS_REQUEST])
 
     def send(self, device):
         print(f"Sending {len(self._data)} bytes: {self._data}")

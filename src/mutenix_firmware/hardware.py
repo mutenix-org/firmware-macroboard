@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+import os
+
 import board
 import digitalio
-import os
 
 HW_VERSION = 0x00
 FIVE_BUTTON_USB = 0x02

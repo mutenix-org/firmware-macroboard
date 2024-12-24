@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import usb_hid
 
 IN_REPORT_LENGTH = 8
@@ -84,7 +86,7 @@ KEYBOARD_DESCRIPTOR = bytes((
     0x19, 0x00,        #   Usage Minimum (0x00)
     0x2A, 0xFF, 0x00,  #   Usage Maximum (0xFF)
     0x81, 0x00,        #   Input (Data,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0xC0               # End Collection
+    0xC0,               # End Collection
 ))
 stupid_keyboard = usb_hid.Device(
     report_descriptor=KEYBOARD_DESCRIPTOR ,

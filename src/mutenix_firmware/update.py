@@ -1,8 +1,12 @@
-import supervisor # type: ignore
+from __future__ import annotations
+
 import time
-import usb_hid # type: ignore
+
 import storage # type: ignore
-from leds import ColorLeds, mix_color
+import supervisor # type: ignore
+import usb_hid # type: ignore
+from leds import ColorLeds
+from leds import mix_color
 
 FILE_TRANSPORT_START = 1
 FILE_TRANSPORT_DATA = 2
@@ -114,18 +118,18 @@ class LedStatus:
                 self.led[i] = mix_color(ColorLeds.blue, ColorLeds.green, self.led_status%10, 10)
             if self.led_status // 10 == (i - 1 + 5):
                 self.led[i] = mix_color(ColorLeds.green, ColorLeds.blue, self.led_status%10, 10)
-    
+
     def running(self):
         if int(self.counter // 100) % 2 == 0:
             self.led[0] = ColorLeds.blue
         else:
             self.led[0] = ColorLeds.green
         self.counter += 1
-        
+
     def error(self):
         for i in range(0, 6):
             self.led[i] = ColorLeds.red
-        
+
     def success(self):
         for i in range(0, 6):
             self.led[i] = ColorLeds.green
@@ -145,7 +149,7 @@ def do_update(led):
     last_transfer = time.monotonic()
     requested = False
     start_time = time.monotonic()
-    
+
     invalid_data_ignore_counter = 5
 
     print("Prepared for update")

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import version as v
 from button import Button
 from hardware import HW_VERSION

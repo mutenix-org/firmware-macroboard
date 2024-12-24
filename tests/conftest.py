@@ -1,8 +1,6 @@
-from unittest.mock import MagicMock
-import sys
+from __future__ import annotations
 
-from circuitpython_mocks.board import board_id
-from circuitpython_mocks.digitalio import DigitalInOut, Direction, Pull
+import sys
 
 pytest_plugins = ["circuitpython_mocks.fixtures"]
 

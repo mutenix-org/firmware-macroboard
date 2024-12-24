@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import board # type: ignore
 import digitalio # type: ignore
-from button import Button
 import hardware
+from button import Button
 
 def is_ten_button_variant(pin):
     pin = digitalio.DigitalInOut(pin)

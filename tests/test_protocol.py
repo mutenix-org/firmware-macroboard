@@ -1,11 +1,13 @@
-import pytest
-from unittest import mock
+from __future__ import annotations
+
 import sys
+from unittest import mock
+
 sys.modules['hardware'] = mock.Mock()
-sys.modules['hardware'].HW_VERSION = 1  # Add the HW_VERSION mock
-from mutenix_firmware.protocol import OutMessage, Ping, SetColor, PrepareUpdate, Reset, Unknown, InMessage
-from mutenix_firmware.button import Button
-import version as v
+sys.modules['hardware'].HW_VERSION = 1  # type: ignore[attr-defined]
+from mutenix_firmware.protocol import OutMessage, Ping, SetColor, PrepareUpdate, Reset, Unknown, InMessage # noqa: E402
+from mutenix_firmware.button import Button # noqa: E402
+import version as v # noqa: E402
 
 OUT_REPORT_LENGTH = 8
 

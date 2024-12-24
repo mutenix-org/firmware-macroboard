@@ -1,16 +1,18 @@
-import storage # type: ignore
-import usb_hid # type: ignore
+from __future__ import annotations
+
 import myhid
+import storage # type: ignore
 import supervisor # type: ignore
 import usb_cdc # type: ignore
-from mybuttons import buttons
-from mode import device_mode
+import usb_hid # type: ignore
 from debug_on import debug
+from mode import device_mode
+from mybuttons import buttons
 
 def do_init():
     supervisor.set_usb_identification("m42e.de", "macropad", pid=8323)
     usb_hid.enable(
-        (myhid.stupid_macroboard, myhid.stupid_keyboard)
+        (myhid.stupid_macroboard, myhid.stupid_keyboard),
     )
 
     # Read the buttons in case a boot option button has been pressed

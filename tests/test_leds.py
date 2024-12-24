@@ -1,12 +1,14 @@
-import pytest
-from unittest import mock
-import digitalio
-from unittest import mock
+from __future__ import annotations
+
 import sys
+from unittest import mock
+
+import digitalio
+import pytest
 
 sys.modules['neopixel_write'] = mock.Mock()
 
-from mutenix_firmware.leds import ColorLeds
+from mutenix_firmware.leds import ColorLeds # noqa: E402
 
 @pytest.fixture
 def mock_digitalio():

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import digitalio # type: ignore
 from utils import EventTime
 

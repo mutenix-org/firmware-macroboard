@@ -1,6 +1,9 @@
-import neopixel_write # type: ignore
-import digitalio # type: ignore
+from __future__ import annotations
+
 import time
+
+import digitalio # type: ignore
+import neopixel_write # type: ignore
 
 
 def mix_color(color1, color2, descriminant, divisor):
@@ -8,7 +11,7 @@ def mix_color(color1, color2, descriminant, divisor):
         [
             int((color1[i] * descriminant + color2[i] * (divisor - descriminant)) / divisor)
             for i in range(4)
-        ]
+        ],
     )
 
 class ColorLeds:

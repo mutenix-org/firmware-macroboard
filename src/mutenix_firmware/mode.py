@@ -1,3 +1,4 @@
+from __future__ import annotations
 class DeviceMode:
     def __init__(self):
         self.storage_enabled = False

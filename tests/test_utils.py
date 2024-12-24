@@ -1,5 +1,7 @@
-import pytest
+from __future__ import annotations
+
 import time
+
 from mutenix_firmware.utils import EventTime
 
 def test_eventtime_initialization():

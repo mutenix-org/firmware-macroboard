@@ -1,13 +1,22 @@
+from __future__ import annotations
+
+import time
+
 import board # type: ignore
 import debug_on
 import hardware
 import myhid
-import time
 import usb_hid # type: ignore
-
-from leds import ColorLeds, Rainbow
+from leds import ColorLeds
+from leds import Rainbow
 from mybuttons import buttons
-from protocol import InMessage, OutMessage, Ping, PrepareUpdate, SetColor, Unknown, Reset
+from protocol import InMessage
+from protocol import OutMessage
+from protocol import Ping
+from protocol import PrepareUpdate
+from protocol import Reset
+from protocol import SetColor
+from protocol import Unknown
 from update import do_update
 
 COMBO_ACTIVATION_TIME = 500_000_000

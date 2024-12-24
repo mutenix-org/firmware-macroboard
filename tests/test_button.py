@@ -1,7 +1,9 @@
-import pytest
+from __future__ import annotations
+
 from unittest import mock
+
+import pytest
 from mutenix_firmware.button import Button
-from utils import EventTime
 
 @pytest.fixture
 def mock_digitalio():

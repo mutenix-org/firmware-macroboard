@@ -1,7 +1,10 @@
-from unittest import mock
-from unittest.mock import patch, PropertyMock, MagicMock
+from __future__ import annotations
 
 import sys
+from unittest import mock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+from unittest.mock import PropertyMock
 
 sys.modules["supervisor"] = mock.Mock()
 sys.modules["usb_hid"] = mock.MagicMock()
@@ -17,7 +20,7 @@ from mutenix_firmware.update import ( # noqa: E402
     LedStatus,
     File,
     do_update,
-) 
+)
 
 
 def test_filetransport_initialization():
@@ -234,7 +237,7 @@ def test_do_update_successful_update():
             + (0).to_bytes(2, "little")
             + b"",
             None,
-        ]
+        ],
     )
     mock_open = mock.mock_open()
     with patch("builtins.open", mock_open):
@@ -250,7 +253,7 @@ def test_do_update_successful_update():
     assert led[5] == bytearray((10, 0, 0, 0))
     mock_open.assert_called_once_with("filename.txt", "wb")
     mock_open().write.assert_called_once_with(
-        b"12345678"
+        b"12345678",
     )
 
 
@@ -259,7 +262,7 @@ def test_do_update_timeout():
     patch("storage.remount")
     patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
     patch(
-        "time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15]
+        "time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15],
     )
     patch("usb_hid.devices", [mock.Mock()])
     device_mock = MagicMock()

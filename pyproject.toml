@@ -1,0 +1,22 @@
+[project]
+name = "mutenix-firmware"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Matthias Bilger", email = "matthias@bilger.info" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "circuitpython-mocks>=0.3.1",
+    "pytest-cov>=6.0.0",
+    "pytest>=8.3.4",
+    "pytest-timeout>=2.3.1",
+]

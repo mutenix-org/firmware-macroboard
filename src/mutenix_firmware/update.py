@@ -2,6 +2,7 @@ import supervisor # type: ignore
 import time
 import usb_hid # type: ignore
 import storage # type: ignore
+from leds import ColorLeds, mix_color
 
 FILE_TRANSPORT_START = 1
 FILE_TRANSPORT_DATA = 2
@@ -10,6 +11,10 @@ FILE_TRANSPORT_FINISH = 4
 
 CHUNK_SIZE = 60
 HEADER_SIZE = 8
+
+TIMEOUT_TRANSFER = 10
+TIMEOUT_UPDATE = 60
+TIME_SHOW_FINAL_STATUS = 4
 
 
 class FileTransport:
@@ -98,48 +103,66 @@ class LedStatus:
     def __init__(self, led):
         self.led = led
         self.led_status = 0
+        self.counter = 0
 
     def update(self):
         self.led_status += 1
-        if self.led_status > 100:
+        if self.led_status >= 100:
             self.led_status = 0
         for i in range(1, 6):
             if self.led_status // 10 == (i - 1):
-                self.led[i] = bytearray((10 - self.led_status % 10, self.led_status % 10, 0, 0))
+                self.led[i] = mix_color(ColorLeds.blue, ColorLeds.green, self.led_status%10, 10)
             if self.led_status // 10 == (i - 1 + 5):
-                self.led[i] = bytearray((self.led_status % 10, 10 - self.led_status % 10, 0, 0))
+                self.led[i] = mix_color(ColorLeds.green, ColorLeds.blue, self.led_status%10, 10)
+    
+    def running(self):
+        if int(self.counter // 100) % 2 == 0:
+            self.led[0] = ColorLeds.blue
+        else:
+            self.led[0] = ColorLeds.green
+        self.counter += 1
+        
+    def error(self):
+        for i in range(0, 6):
+            self.led[i] = ColorLeds.red
+        
+    def success(self):
+        for i in range(0, 6):
+            self.led[i] = ColorLeds.green
 
 
 def do_update(led):
+    led_status = LedStatus(led)
     try:
         storage.remount("/", readonly=False)
     except RuntimeError:
-        for i in range(1, 6):
-            led[i] = bytearray((0, 10, 0, 0))
-        time.sleep(4)
+        led_status.error()
+        time.sleep(TIME_SHOW_FINAL_STATUS)
         return
     supervisor.runtime.autoreload = False
     files = {}
     macropad = usb_hid.devices[0]
     last_transfer = time.monotonic()
     requested = False
-    led_status = LedStatus(led)
     start_time = time.monotonic()
+    
+    invalid_data_ignore_counter = 5
 
     print("Prepared for update")
-    counter = 0
     while True:
         data = macropad.get_last_received_report(2)
-        if int(counter // 100) % 2 == 0:
-            led[0] = bytearray((0, 0, 10, 0))
-        else:
-            led[0] = bytearray((10, 0, 0, 0))
-        counter += 1
+        led_status.running()
         if data:
             print("Data received")
             ft = FileTransport(data)
             if not ft.is_valid():
-                print("Invalid data")
+                invalid_data_ignore_counter -= 1
+                if invalid_data_ignore_counter == 0:
+                    print("Cannot recover from invalid data, aborting")
+                    led_status.error()
+                    time.sleep(TIME_SHOW_FINAL_STATUS)
+                    break
+                print(f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times")
                 continue
 
             last_transfer = time.monotonic()
@@ -162,7 +185,7 @@ def do_update(led):
                 files[ft.id].write(ft)
             print(f"{files[ft.id].filename}[ft.id]", ft.package, '/', ft.total_packages)
             if files[ft.id].is_complete():
-                print("File complete", files[ft.id].filename)
+                print("File complete, writing", files[ft.id].filename)
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
 
@@ -172,7 +195,9 @@ def do_update(led):
                 print("request file", file.id)
                 request_chunk(file)
                 requested = True
-        if (requested and time.monotonic() - last_transfer > 10) or time.monotonic() - start_time > 60:
+        if (requested and time.monotonic() - last_transfer > TIMEOUT_TRANSFER) or time.monotonic() - start_time > TIMEOUT_UPDATE:
             print("Update timed out")
+            led_status.error()
             break
+    led_status.success()
     supervisor.runtime.autoreload = True

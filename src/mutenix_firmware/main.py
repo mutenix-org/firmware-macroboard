@@ -1,7 +1,6 @@
 import board # type: ignore
 import debug_on
 import hardware
-import microcontroller # type: ignore
 import myhid
 import time
 import usb_hid # type: ignore
@@ -34,7 +33,8 @@ def log(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def do_reset():
+def do_reset(): # pragma: no cover
+    import microcontroller # type: ignore
     microcontroller.reset()
 
 

@@ -3,6 +3,14 @@ import digitalio # type: ignore
 import time
 
 
+def mix_color(color1, color2, descriminant, divisor):
+    return bytearray(
+        [
+            int((color1[i] * descriminant + color2[i] * (divisor - descriminant)) / divisor)
+            for i in range(4)
+        ]
+    )
+
 class ColorLeds:
     blue = bytearray([0, 0, 10, 0])
     purple = bytearray([0, 10, 10, 0])
@@ -27,7 +35,6 @@ class ColorLeds:
             raise ValueError("Value must be exactly 4 bytes long")
         self.colors[key*4:key*4+4] = value
         neopixel_write.neopixel_write(self.pin, self.colors)
-
 
 class Rainbow:
     def __init__(self, led, start, end, speed=0.1):

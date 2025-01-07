@@ -19,7 +19,7 @@ jobs:
         rm release/.gitkeep
       
     - name: GitHub Releases
-      uses: fnkr/github-action-ghr@v1.3.1
+      uses: fnkr/github-action-ghr@v1.3
       env:
           GHR_PATH: release/
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

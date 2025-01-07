@@ -13,7 +13,7 @@ This repository contains the firmware for the mutenix.de MacroBoard.
 
 Based on the hardware Version the buttons are ordered in the following way:
 
-### V1
+### V0.1
 
 ```
 +---+
@@ -26,7 +26,7 @@ Based on the hardware Version the buttons are ordered in the following way:
 +---+
 ```
 
-### V2 - USB 5 Buttons
+### V1.0 - USB 5 Buttons
 
 ```
 +---+
@@ -39,7 +39,7 @@ Based on the hardware Version the buttons are ordered in the following way:
 +---+
 ```
 
-### V2 - BT 5 Buttons
+### V1.0 - BT 5 Buttons
 
 ```
 +---+
@@ -53,7 +53,7 @@ Based on the hardware Version the buttons are ordered in the following way:
 ```
 
 
-### V2 - USB 10 Buttons
+### V1.0 - USB 10 Buttons
 
 ```
                                +-----+
@@ -66,7 +66,7 @@ Based on the hardware Version the buttons are ordered in the following way:
                                +-----+
 ```
 
-### V2 - BT 10 Buttons
+### V1.0 - BT 10 Buttons
 
 ```
                                +-----+
@@ -78,3 +78,14 @@ Based on the hardware Version the buttons are ordered in the following way:
                                |     |
                                +-----+
 ```
+
+## Links
+
+- [Host Software](../software-teams-python)
+- [MacroBoard Hardware](../hardware)
+
+
+## Create a release
+
+- Create a tag
+- run the script `scripts/make_release.sh`

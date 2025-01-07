@@ -1,9 +1,20 @@
 from __future__ import annotations
 
 from unittest import mock
+import sys
+
+from importlib.abc import MetaPathFinder
+
+class MockFcntl(MetaPathFinder):
+    def find_spec(self, fullname, target, path=None):
+        if fullname == 'digitalio':
+            return mock.MagicMock()
+
+sys.meta_path.insert(0, MockFcntl())
 
 import pytest
 from mutenix_firmware.button import Button
+
 
 @pytest.fixture
 def mock_digitalio():
@@ -23,21 +34,24 @@ def test_button_initialization(mock_digitalio, mock_eventtime):
     assert not button.doubletapped
 
 def test_button_read(mock_digitalio, mock_eventtime):
-    pin = mock.Mock()
-    button = Button(id=1, pin=pin)
-    mock_digitalio.return_value.value = False
+    pin_mock = mock.Mock()
+    pin_mock.value = True
+    mock_digitalio.return_value = pin_mock
+    button = Button(id=1)
+    button._pin.value = False
     assert button.read()
     assert button.pressed
     assert not button.released
     assert button.changed_state
 
 def test_button_triggered(mock_digitalio, mock_eventtime):
-    pin = mock.Mock()
-    button = Button(id=1, pin=pin)
-    mock_digitalio.return_value.value = False
+    pin_mock = mock.Mock()
+    pin_mock.value = True
+    mock_digitalio.return_value = pin_mock
+    button = Button(id=1)
     button.read()
     assert not button.triggered
-    mock_digitalio.return_value.value = True
+    button._pin.value = True
     button.read()
     assert button.triggered
     assert not button.triggered

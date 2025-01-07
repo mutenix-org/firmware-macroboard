@@ -1,0 +1,8 @@
+{
+    "python.testing.pytestArgs": [
+    "--rootdir",
+    "${workspaceFolder}",
+  ],
+  "python.testing.pytestEnabled": false,
+
+}

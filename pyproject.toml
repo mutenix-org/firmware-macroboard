@@ -1,7 +1,7 @@
 [project]
 name = "mutenix-firmware"
 version = "0.1.0"
-description = "Add your description here"
+description = "Firmware for the mutenix hardware."
 readme = "README.md"
 authors = [
     { name = "Matthias Bilger", email = "matthias@bilger.info" }

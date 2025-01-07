@@ -11,7 +11,7 @@ sys.modules["usb_hid"] = mock.MagicMock()
 sys.modules["storage"] = mock.Mock()
 sys.modules["board"] = mock.MagicMock()
 
-from mutenix_firmware.update import ( # noqa: E402
+from mutenix_firmware.update import (  # noqa: E402
     FileTransport,
     FILE_TRANSPORT_START,
     FILE_TRANSPORT_DATA,
@@ -20,6 +20,7 @@ from mutenix_firmware.update import ( # noqa: E402
     LedStatus,
     File,
     do_update,
+    request_chunk,
 )
 
 
@@ -241,8 +242,8 @@ def test_do_update_successful_update():
     )
     mock_open = mock.mock_open()
     with patch("builtins.open", mock_open):
-        with patch('mutenix_firmware.update.TIMEOUT_TRANSFER', 0.1):
-            with patch('mutenix_firmware.update.TIMEOUT_UPDATE', 0.1):
+        with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
+            with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
                 do_update(led)
 
     assert led[0] == bytearray((10, 0, 0, 0))
@@ -262,16 +263,17 @@ def test_do_update_timeout():
     patch("storage.remount")
     patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
     patch(
-        "time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15],
+        "time.monotonic",
+        side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 15],
     )
     patch("usb_hid.devices", [mock.Mock()])
     device_mock = MagicMock()
     sys.modules["usb_hid"].devices = [device_mock]
     device_mock.get_last_received_report.return_value = None
 
-    with patch('mutenix_firmware.update.TIMEOUT_TRANSFER', 0.1):
-        with patch('mutenix_firmware.update.TIMEOUT_UPDATE', 0.1):
-            with patch('mutenix_firmware.update.TIME_SHOW_FINAL_STATUS', 0.1):
+    with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
+        with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
+            with patch("mutenix_firmware.update.TIME_SHOW_FINAL_STATUS", 0.1):
                 do_update(led)
 
     assert led[0] == bytearray((10, 0, 0, 0))
@@ -284,15 +286,15 @@ def test_do_update_timeout():
 
 def test_do_update_remount_failure():
     led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
-    sys.modules["storage"].remount.side_effect=RuntimeError
+    sys.modules["storage"].remount.side_effect = RuntimeError
     patch("time.sleep")
     device_mock = MagicMock()
     sys.modules["usb_hid"].devices = [device_mock]
     device_mock.get_last_received_report.return_value = None
 
-    with patch('mutenix_firmware.update.TIMEOUT_TRANSFER', 0.1):
-        with patch('mutenix_firmware.update.TIMEOUT_UPDATE', 0.1):
-            with patch('mutenix_firmware.update.TIME_SHOW_FINAL_STATUS', 0.1):
+    with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
+        with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
+            with patch("mutenix_firmware.update.TIME_SHOW_FINAL_STATUS", 0.1):
                 do_update(led)
 
     assert led[1] == bytearray((0, 10, 0, 0))
@@ -300,3 +302,39 @@ def test_do_update_remount_failure():
     assert led[3] == bytearray((0, 10, 0, 0))
     assert led[4] == bytearray((0, 10, 0, 0))
     assert led[5] == bytearray((0, 10, 0, 0))
+    sys.modules["storage"].remount.side_effect = None
+
+
+def test_request_chunk():
+    macropad_mock = MagicMock()
+    file_mock = MagicMock()
+    file_mock.id = 1
+    file_mock.packages = [0]
+
+    request_chunk(macropad_mock, file_mock)
+
+    macropad_mock.send_report.assert_called_once_with(
+        bytearray("RQ", "utf-8")
+        + (1).to_bytes(2, "little")
+        + (0).to_bytes(2, "little")
+        + b"\0" * 18,
+        2,
+    )
+
+
+def test_request_chunk_with_different_file_id_and_package():
+    macropad_mock = MagicMock()
+    file_mock = MagicMock()
+    file_mock.id = 2
+    file_mock.packages = [1]
+
+    request_chunk(macropad_mock, file_mock)
+
+    macropad_mock.send_report.assert_called_once_with(
+        bytearray("RQ", "utf-8")
+        + (2).to_bytes(2, "little")
+        + (1).to_bytes(2, "little")
+        + b"\0" * 18,
+        2,
+    )
+    

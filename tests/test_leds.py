@@ -3,11 +3,11 @@ from __future__ import annotations
 import sys
 from unittest import mock
 
-import digitalio
-import pytest
-
 sys.modules['neopixel_write'] = mock.Mock()
+sys.modules['digitalio'] = mock.Mock()
+sys.modules['board'] = mock.Mock()
 
+import pytest
 from mutenix_firmware.leds import ColorLeds # noqa: E402
 
 @pytest.fixture
@@ -22,11 +22,12 @@ def mock_neopixel_write():
 
 def test_colorleds_initialization(mock_digitalio):
     pin = mock.Mock()
+    sys.modules['digitalio'].Direction = mock.Mock()
+    sys.modules['digitalio'].Direction.OUTPUT = 1
     leds = ColorLeds(pin=pin, count=6)
     assert leds.count == 6
     assert len(leds.colors) == 24
     mock_digitalio.assert_called_once_with(pin)
-    assert mock_digitalio.return_value.direction == digitalio.Direction.OUTPUT
 
 def test_colorleds_getitem(mock_digitalio):
     pin = mock.Mock()

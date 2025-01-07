@@ -1,3 +1,4 @@
 update.tar.gz
 .coverage
 dist
+release/

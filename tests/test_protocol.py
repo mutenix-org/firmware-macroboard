@@ -4,7 +4,8 @@ import sys
 from unittest import mock
 
 sys.modules['hardware'] = mock.Mock()
-sys.modules['hardware'].HW_VERSION = 1  # type: ignore[attr-defined]
+sys.modules['hardware'].hardware_variant = mock.Mock()  # type: ignore[attr-defined]
+sys.modules['hardware'].hardware_variant.hardware_variant = 1  # type: ignore[attr-defined]
 from mutenix_firmware.protocol import OutMessage, Ping, SetColor, PrepareUpdate, Reset, Unknown, InMessage # noqa: E402
 from mutenix_firmware.button import Button # noqa: E402
 import version as v # noqa: E402

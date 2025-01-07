@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 
-import storage # type: ignore
-import supervisor # type: ignore
-import usb_hid # type: ignore
+import storage  # type: ignore
+import supervisor  # type: ignore
+import usb_hid  # type: ignore
 from leds import ColorLeds
 from leds import mix_color
 
@@ -52,9 +52,7 @@ class FileTransport:
         print("Filename", filename)
         size_length = self.content[1 + filename_length]
         total_size = int.from_bytes(
-            self.content[
-                2 + filename_length : 2 + filename_length + size_length
-            ],
+            self.content[2 + filename_length : 2 + filename_length + size_length],
             "little",
         )
         return filename, total_size
@@ -72,7 +70,7 @@ class File:
             raise ValueError("First element must be start")
         self.filename, self.total_size = first_element.as_start()
         self.id = first_element.id
-        self.packages = list(range(first_element.total_packages+1))
+        self.packages = list(range(first_element.total_packages + 1))
         self.content = bytearray((0,) * self.total_size)
 
     def write(self, data: FileTransport):
@@ -116,9 +114,13 @@ class LedStatus:
             self.led_status = 0
         for i in range(1, 6):
             if self.led_status // 10 == (i - 1):
-                self.led[i] = mix_color(ColorLeds.blue, ColorLeds.green, self.led_status%10, 10)
+                self.led[i] = mix_color(
+                    ColorLeds.blue, ColorLeds.green, self.led_status % 10, 10
+                )
             if self.led_status // 10 == (i - 1 + 5):
-                self.led[i] = mix_color(ColorLeds.green, ColorLeds.blue, self.led_status%10, 10)
+                self.led[i] = mix_color(
+                    ColorLeds.green, ColorLeds.blue, self.led_status % 10, 10
+                )
 
     def running(self):
         if int(self.counter // 100) % 2 == 0:
@@ -167,7 +169,9 @@ def do_update(led):
                     led_status.error()
                     time.sleep(TIME_SHOW_FINAL_STATUS)
                     break
-                print(f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times")
+                print(
+                    f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times"
+                )
                 continue
 
             last_transfer = time.monotonic()
@@ -188,19 +192,24 @@ def do_update(led):
                 print("New file", files[ft.id])
             else:
                 files[ft.id].write(ft)
-            print(f"{files[ft.id].filename}[ft.id]", ft.package, '/', ft.total_packages)
+            print(f"{files[ft.id].filename}[ft.id]", ft.package, "/", ft.total_packages)
             if files[ft.id].is_complete():
                 print("File complete, writing", files[ft.id].filename)
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
 
-        if time.monotonic() - last_transfer > TIMEOUT_TRANSFER_REQUEST and not requested:
+        if (
+            time.monotonic() - last_transfer > TIMEOUT_TRANSFER_REQUEST
+            and not requested
+        ):
             if len(files) > 0:
                 file = next(files.values())
                 print("request file", file.id)
                 request_chunk(file)
                 requested = True
-        if (requested and time.monotonic() - last_transfer > TIMEOUT_TRANSFER) or time.monotonic() - start_time > TIMEOUT_UPDATE:
+        if (
+            requested and time.monotonic() - last_transfer > TIMEOUT_TRANSFER
+        ) or time.monotonic() - start_time > TIMEOUT_UPDATE:
             print("Update timed out")
             led_status.error()
             break

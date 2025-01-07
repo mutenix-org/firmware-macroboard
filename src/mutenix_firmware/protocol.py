@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import version as v
 from button import Button
-from hardware import HW_VERSION
+from hardware import hardware_variant
 
 OUT_REPORT_LENGTH = 8
 
 
 class OutMessage:
+    """Message from the host to the device."""
     SETCOLOR = 0x1
     PING = 0xF0
     PREPARE_UPDATE = 0xE0
@@ -28,11 +29,13 @@ class OutMessage:
 
 
 class Ping(OutMessage):
+    """Ping message to signal that the host is alive."""
     def __init__(self, _):
         pass
 
 
 class Unknown(OutMessage):
+    """Unknown message."""
     def __init__(self, data):
         self._data = data
 
@@ -42,6 +45,7 @@ class Unknown(OutMessage):
 
 
 class SetColor(OutMessage):
+    """Set the color of a led."""
     def __init__(self, data):
         self._buttonid = data[0]
         self._color = bytearray(data[1:5])
@@ -56,15 +60,18 @@ class SetColor(OutMessage):
 
 
 class PrepareUpdate(OutMessage):
+    """Prepare the device for a firmware update."""
     def __init__(self):
         pass
 
 
 class Reset(OutMessage):
+    """Reset the device."""
     def __init__(self):
         pass
 
 class InMessage:
+    """Message from the device to the host."""
     INITIALIZE = 0x99
     STATUS = 0x1
     STATUS_REQUEST = 0x2
@@ -74,7 +81,7 @@ class InMessage:
 
     @classmethod
     def initialize(cls):
-        return cls([cls.INITIALIZE, v.MAJOR, v.MINOR, v.PATCH, HW_VERSION])
+        return cls([cls.INITIALIZE, v.MAJOR, v.MINOR, v.PATCH, hardware_variant.hardware_variant])
 
     @classmethod
     def button(cls, button: Button):

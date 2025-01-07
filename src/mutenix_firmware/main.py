@@ -4,19 +4,20 @@ import time
 
 import board  # type: ignore
 import debug_on
-import hardware
+from hardware import hardware_variant
 import myhid
 import usb_hid  # type: ignore
-from leds import ColorLeds
-from leds import Rainbow
+from leds import ColorLeds, Rainbow
 from mybuttons import buttons
-from protocol import InMessage
-from protocol import OutMessage
-from protocol import Ping
-from protocol import PrepareUpdate
-from protocol import Reset
-from protocol import SetColor
-from protocol import Unknown
+from protocol import (
+    InMessage,
+    OutMessage,
+    Ping,
+    PrepareUpdate,
+    Reset,
+    SetColor,
+    Unknown,
+)
 from update import do_update
 
 COMBO_ACTIVATION_TIME = 500_000_000
@@ -25,22 +26,7 @@ COMMUNICATION_TIMEOUT = 5.5
 update_mode = False
 macropad = usb_hid.devices[0]
 
-if hardware.HW_VERSION == hardware.FIVE_BUTTON_USB:
-    led_pin = board.GP7
-    led_count = 6
-elif (
-    hardware.HW_VERSION == hardware.TEN_BUTTON_USB_V2
-    or hardware.HW_VERSION == hardware.FIVE_BUTTON_USB_V2
-):
-    led_pin = board.GP15
-    led_count = 13
-elif (
-    hardware.HW_VERSION == hardware.FIVE_BUTTON_BT
-    or hardware.HW_VERSION == hardware.TEN_BUTTON_BT
-):
-    led_pin = board.P0_20
-    led_count = 13
-led = ColorLeds(led_pin, led_count)
+led = ColorLeds(hardware_variant.led_pin, hardware_variant.led_count)
 
 
 def log(*args, **kwargs):

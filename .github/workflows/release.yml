@@ -14,7 +14,9 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: build release
-      run: scripts/make_release.sh
+      run: |
+        scripts/make_release.sh
+        rm release/.gitkeep
       
     - name: GitHub Releases
       uses: fnkr/github-action-ghr@v1.3.1

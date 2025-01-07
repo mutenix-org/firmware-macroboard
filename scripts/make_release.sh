@@ -48,3 +48,4 @@ OUTPUT_FILE="release/${VERSION}.tar.gz"
 tar -czvf "$OUTPUT_FILE" -C src/mutenix_firmware .
 
 echo "Release package created: $OUTPUT_FILE"
+rm relase/.gitkeep

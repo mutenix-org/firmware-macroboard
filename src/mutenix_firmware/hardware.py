@@ -12,11 +12,13 @@ FIVE_BUTTON_USB_V2 = 0x04
 TEN_BUTTON_USB_V2 = 0x05
 TEN_BUTTON_BT = 0x06
 
+
 def is_ten_button_variant(variant):
     variant = digitalio.DigitalInOut(variant)
     variant.direction = digitalio.Direction.INPUT
     variant.pull = digitalio.Pull.UP
     return not variant.value
+
 
 if board.board_id == "waveshare_rp2040_zero":
     if os.path.exists("/version1"):

@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import time
 
-import digitalio # type: ignore
-import neopixel_write # type: ignore
+import digitalio  # type: ignore
+import neopixel_write  # type: ignore
 
 
 def mix_color(color1, color2, descriminant, divisor):
     return bytearray(
         [
-            int((color1[i] * descriminant + color2[i] * (divisor - descriminant)) / divisor)
+            int(
+                (color1[i] * descriminant + color2[i] * (divisor - descriminant))
+                / divisor,
+            )
             for i in range(4)
         ],
     )
+
 
 class ColorLeds:
     blue = bytearray([0, 0, 10, 0])
@@ -25,19 +29,20 @@ class ColorLeds:
     def __init__(self, pin=None, count=6):
         self.pin = digitalio.DigitalInOut(pin)
         self.pin.direction = digitalio.Direction.OUTPUT
-        self.colors = bytearray(count*4)
+        self.colors = bytearray(count * 4)
         self.count = count
 
     def __getitem__(self, key):
-        return self.colors[key*4:key*4+4]
+        return self.colors[key * 4 : key * 4 + 4]
 
     def __setitem__(self, key, value):
         if not isinstance(value, (bytes, bytearray)):
             raise ValueError("Value must be a bytes or bytearray object")
         if len(value) != 4:
             raise ValueError("Value must be exactly 4 bytes long")
-        self.colors[key*4:key*4+4] = value
+        self.colors[key * 4 : key * 4 + 4] = value
         neopixel_write.neopixel_write(self.pin, self.colors)
+
 
 class Rainbow:
     def __init__(self, led, start, end, speed=0.1):
@@ -53,12 +58,12 @@ class Rainbow:
             return
         self._time = time.monotonic()
         self._hue = (self._hue + self.speed) % 1
-        for i in range(self._start, self._end+1):
+        for i in range(self._start, self._end + 1):
             self.led[i] = self._color(i)
 
     def _color(self, i):
         r, g, b = self._hsv_to_rgb(self._hue, 1, 1)
-        return bytearray([int(g*10), int(r*10), int(b*10), 0])
+        return bytearray([int(g * 10), int(r * 10), int(b * 10), 0])
 
     def _hsv_to_rgb(self, h, s, v):
         i = int(h * 6)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import digitalio # type: ignore
+import digitalio  # type: ignore
 from utils import EventTime
 
 DOUBLETAP_TIME_MS = 200
@@ -32,7 +32,7 @@ class Button:
     @property
     def doubletapped(self):
         difftime = self._pushEventTime.diff
-        return difftime < DOUBLETAP_TIME_MS/1000.0
+        return difftime < DOUBLETAP_TIME_MS / 1000.0
 
     def read(self):
         value = not self._pin.value

@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import time
 
-import board # type: ignore
+import board  # type: ignore
 import debug_on
 import hardware
 import myhid
-import usb_hid # type: ignore
+import usb_hid  # type: ignore
 from leds import ColorLeds
 from leds import Rainbow
 from mybuttons import buttons
@@ -28,10 +28,16 @@ macropad = usb_hid.devices[0]
 if hardware.HW_VERSION == hardware.FIVE_BUTTON_USB:
     led_pin = board.GP7
     led_count = 6
-elif hardware.HW_VERSION == hardware.TEN_BUTTON_USB_V2 or hardware.HW_VERSION == hardware.FIVE_BUTTON_USB_V2:
+elif (
+    hardware.HW_VERSION == hardware.TEN_BUTTON_USB_V2
+    or hardware.HW_VERSION == hardware.FIVE_BUTTON_USB_V2
+):
     led_pin = board.GP15
     led_count = 13
-elif hardware.HW_VERSION == hardware.FIVE_BUTTON_BT or hardware.HW_VERSION == hardware.TEN_BUTTON_BT:
+elif (
+    hardware.HW_VERSION == hardware.FIVE_BUTTON_BT
+    or hardware.HW_VERSION == hardware.TEN_BUTTON_BT
+):
     led_pin = board.P0_20
     led_count = 13
 led = ColorLeds(led_pin, led_count)
@@ -42,8 +48,9 @@ def log(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def do_reset(): # pragma: no cover
-    import microcontroller # type: ignore
+def do_reset():  # pragma: no cover
+    import microcontroller  # type: ignore
+
     microcontroller.reset()
 
 
@@ -59,7 +66,7 @@ def handle_received_report(data):
         log("ping")
     elif isinstance(p, SetColor):
         if p.buttonid < 6 and p.buttonid >= 1:
-            led[6-p.buttonid] = p.color
+            led[6 - p.buttonid] = p.color
         log(f"led {p.buttonid} set to {p.color}")
     elif isinstance(p, PrepareUpdate):
         log("Prepare update")
@@ -82,7 +89,10 @@ class Combos:
             if all([buttons[i].pressed for i in c]):
                 if self.combo_matched_time[c] == 0:
                     self.combo_matched_time[c] = time.monotonic_ns()
-                if time.monotonic_ns() - self.combo_matched_time[c] > COMBO_ACTIVATION_TIME:
+                if (
+                    time.monotonic_ns() - self.combo_matched_time[c]
+                    > COMBO_ACTIVATION_TIME
+                ):
                     f()
                     for i in c:
                         buttons[i].handled()
@@ -90,30 +100,34 @@ class Combos:
             else:
                 self.combo_matched_time[c] = 0
 
+
 def send_url():
     keyboard = myhid.stupid_keyboard
     url = "https://mutenix.de"
     for char in url:
         report = [0x00] * 8
-        if 'a' <= char <= 'z':
-            report[2] = ord(char) - ord('a') + 0x04
-        elif 'A' <= char <= 'Z':
+        if "a" <= char <= "z":
+            report[2] = ord(char) - ord("a") + 0x04
+        elif "A" <= char <= "Z":
             report[0] = 0x02  # Left Shift
-            report[2] = ord(char) - ord('A') + 0x04
-        elif char == ':':
+            report[2] = ord(char) - ord("A") + 0x04
+        elif char == ":":
             report[0] = 0x02  # Left Shift
             report[2] = 0x33  # Colon
-        elif char == '/':
+        elif char == "/":
             report[2] = 0x38  # Slash
-        elif char == '.':
+        elif char == ".":
             report[2] = 0x37  # Period
         keyboard.send_report(bytearray(report), 3)
         keyboard.send_report(bytearray([0x00] * 8), 3)  # Release key
 
-combos = Combos({
-    (0, 1, 4): do_reset,
-    (3, 4): send_url,
-})
+
+combos = Combos(
+    {
+        (0, 1, 4): do_reset,
+        (3, 4): send_url,
+    },
+)
 
 while True:
     try:
@@ -122,7 +136,7 @@ while True:
         log(f"USB receiving not working, but who cares {e}")
     try:
         if data:
-            log('data', data)
+            log("data", data)
             if last_communication == 0:
                 InMessage.status_request().send(macropad)
             last_communication = time.monotonic()

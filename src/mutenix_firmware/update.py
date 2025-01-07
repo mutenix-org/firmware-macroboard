@@ -19,6 +19,7 @@ HEADER_SIZE = 8
 TIMEOUT_TRANSFER = 10
 TIMEOUT_UPDATE = 60
 TIME_SHOW_FINAL_STATUS = 4
+TIMEOUT_TRANSFER_REQUEST = 1
 
 
 class FileTransport:
@@ -148,7 +149,7 @@ def do_update(led):
     macropad = usb_hid.devices[0]
     last_transfer = time.monotonic()
     requested = False
-    start_time = time.monotonic()
+    start_time = last_transfer
 
     invalid_data_ignore_counter = 5
 
@@ -157,7 +158,7 @@ def do_update(led):
         data = macropad.get_last_received_report(2)
         led_status.running()
         if data:
-            print("Data received")
+            print("Data received", last_transfer)
             ft = FileTransport(data)
             if not ft.is_valid():
                 invalid_data_ignore_counter -= 1
@@ -193,7 +194,7 @@ def do_update(led):
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
 
-        if time.monotonic() - last_transfer > 1 and not requested:
+        if time.monotonic() - last_transfer > TIMEOUT_TRANSFER_REQUEST and not requested:
             if len(files) > 0:
                 file = next(files.values())
                 print("request file", file.id)

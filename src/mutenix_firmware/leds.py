@@ -52,14 +52,24 @@ class Rainbow:
         self._start = start
         self._end = end
         self._time = time.monotonic()
+        self._was_active = True
 
     def next(self):
         if time.monotonic() - self._time < self.speed:
             return
+        self._was_active = True
         self._time = time.monotonic()
         self._hue = (self._hue + self.speed) % 1
         for i in range(self._start, self._end + 1):
             self.led[i] = self._color(i)
+
+    def was_active(self):
+        return self._was_active
+
+    def off(self):
+        self._was_active = False
+        for i in range(self._start, self._end + 1):
+            self.led[i] = (0, 0, 0, 0)
 
     def _color(self, i):
         r, g, b = self._hsv_to_rgb(self._hue, 1, 1)

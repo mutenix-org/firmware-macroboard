@@ -2,22 +2,20 @@ from __future__ import annotations
 
 import time
 
-import board  # type: ignore
 import debug_on
-from hardware import hardware_variant
 import myhid
 import usb_hid  # type: ignore
-from leds import ColorLeds, Rainbow
+from hardware import hardware_variant
+from leds import ColorLeds
+from leds import Rainbow
 from mybuttons import buttons
-from protocol import (
-    InMessage,
-    OutMessage,
-    Ping,
-    PrepareUpdate,
-    Reset,
-    SetColor,
-    Unknown,
-)
+from protocol import InMessage
+from protocol import OutMessage
+from protocol import Ping
+from protocol import PrepareUpdate
+from protocol import Reset
+from protocol import SetColor
+from protocol import Unknown
 from update import do_update
 
 COMBO_ACTIVATION_TIME = 500_000_000
@@ -122,6 +120,8 @@ while True:
         log(f"USB receiving not working, but who cares {e}")
     try:
         if data:
+            if rainbow.was_active():
+                rainbow.off()
             log("data", data)
             if last_communication == 0:
                 InMessage.status_request().send(macropad)

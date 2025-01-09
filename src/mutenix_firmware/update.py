@@ -102,6 +102,16 @@ def request_chunk(macropad, file):
     )
 
 
+def confirm_chunk(macropad, file):
+    macropad.send_report(
+        bytearray("AK", "utf-8")
+        + file.id.to_bytes(2, "little")
+        + file.package.to_bytes(2, "little")
+        + b"\0" * 18,
+        2,
+    )
+
+
 class LedStatus:
     def __init__(self, led):
         self.led = led
@@ -115,11 +125,17 @@ class LedStatus:
         for i in range(1, 6):
             if self.led_status // 10 == (i - 1):
                 self.led[i] = mix_color(
-                    ColorLeds.blue, ColorLeds.green, self.led_status % 10, 10
+                    ColorLeds.blue,
+                    ColorLeds.green,
+                    self.led_status % 10,
+                    10,
                 )
             if self.led_status // 10 == (i - 1 + 5):
                 self.led[i] = mix_color(
-                    ColorLeds.green, ColorLeds.blue, self.led_status % 10, 10
+                    ColorLeds.green,
+                    ColorLeds.blue,
+                    self.led_status % 10,
+                    10,
                 )
 
     def running(self):
@@ -170,9 +186,10 @@ def do_update(led):
                     time.sleep(TIME_SHOW_FINAL_STATUS)
                     break
                 print(
-                    f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times"
+                    f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times",
                 )
                 continue
+            confirm_chunk(macropad, ft)
 
             last_transfer = time.monotonic()
             led_status.update()
@@ -197,6 +214,7 @@ def do_update(led):
                 print("File complete, writing", files[ft.id].filename)
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
+                del files[ft.id]
 
         if (
             time.monotonic() - last_transfer > TIMEOUT_TRANSFER_REQUEST

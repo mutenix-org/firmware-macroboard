@@ -69,7 +69,7 @@ class Rainbow:
     def off(self):
         self._was_active = False
         for i in range(self._start, self._end + 1):
-            self.led[i] = (0, 0, 0, 0)
+            self.led[i] = bytearray([0, 0, 0, 0])
 
     def _color(self, i):
         r, g, b = self._hsv_to_rgb(self._hue, 1, 1)

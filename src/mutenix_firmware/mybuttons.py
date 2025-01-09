@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from hardware import hardware_variant
 from button import Button
+from hardware import hardware_variant
 
 
 """Buttons for enabling special boot modes."""
 BOOT_USB_BUTTON = 0
 BOOT_SERIAL_BUTTON = 1
 
-buttons = [Button(i, pin) for i, pin in enumerate(hardware_variant.buttons)]
+buttons = [Button(i, pin) for i, pin in enumerate(hardware_variant.buttons, 1)]
 
 
 def read_buttons():

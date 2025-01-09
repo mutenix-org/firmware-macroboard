@@ -12,12 +12,20 @@ TEN_BUTTON_USB_V2 = 0x05
 TEN_BUTTON_BT = 0x06
 
 
+def file_or_dir_exists(filename):
+    try:
+        os.stat(filename)
+        return True
+    except OSError:
+        return False
+
+
 class HardwareOptions:
     def __init__(self):
         self.board_id = board.board_id
         self.led_count = 13
         if self.board_id == "waveshare_rp2040_zero":
-            if os.path.exists("/version1"):
+            if file_or_dir_exists("/version1"):
                 self.led_pin = board.GP7
                 self.led_count = 6
                 self.hardware_variant = FIVE_BUTTON_USB
@@ -27,7 +35,7 @@ class HardwareOptions:
                 if self._is_ten_button_variant():
                     self.hardware_variant = TEN_BUTTON_USB_V2
                 else:
-                    self.hardware_variant = FIVE_BUTTON_USB
+                    self.hardware_variant = FIVE_BUTTON_USB_V2
         elif self.board_id == "supermini_nrf52840":
             self.variant_pin = board.P0_17
             self.led_pin = board.P0_20
@@ -63,7 +71,7 @@ class HardwareOptions:
                         board.GP2,
                         board.GP1,
                         board.GP0,
-                    ]
+                    ],
                 )
         elif self.hardware_variant in [FIVE_BUTTON_BT, TEN_BUTTON_BT]:
             self.buttons = [
@@ -81,7 +89,7 @@ class HardwareOptions:
                         board.P0_02,
                         board.P0_29,
                         board.P0_31,
-                    ]
+                    ],
                 )
 
     def _is_ten_button_variant(self):

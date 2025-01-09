@@ -17,4 +17,4 @@ class EventTime:
 
     @property
     def diff(self):
-        return self._current - self._last if self.triggered >= 2 else float('inf')
+        return self._current - self._last if self.triggered >= 2 else float("inf")

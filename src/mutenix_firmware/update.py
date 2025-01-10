@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 
 import storage  # type: ignore
@@ -12,6 +13,7 @@ FILE_TRANSPORT_START = 1
 FILE_TRANSPORT_DATA = 2
 FILE_TRANSPORT_END = 3
 FILE_TRANSPORT_FINISH = 4
+FILE_TRANSPORT_DELETE = 5
 
 CHUNK_SIZE = 60
 HEADER_SIZE = 8
@@ -40,6 +42,7 @@ class FileTransport:
             FILE_TRANSPORT_START,
             FILE_TRANSPORT_DATA,
             FILE_TRANSPORT_END,
+            FILE_TRANSPORT_DELETE,
             FILE_TRANSPORT_FINISH,
         ]
 
@@ -57,11 +60,22 @@ class FileTransport:
         )
         return filename, total_size
 
+    def as_delete(self) -> str:
+        if self.type_ != FILE_TRANSPORT_DELETE:
+            raise ValueError("Not a delete packet")
+        filename_length = self.content[0]
+        print("Filename length", filename_length)
+        filename = self.content[1 : 1 + filename_length].decode("utf-8")
+        return filename
+
     def is_end(self):
         return self.type_ == FILE_TRANSPORT_END
 
     def is_finish(self):
         return self.type_ == FILE_TRANSPORT_FINISH
+
+    def is_delete(self):
+        return self.type_ == FILE_TRANSPORT_DELETE
 
 
 class File:
@@ -194,6 +208,11 @@ def do_update(led):
             last_transfer = time.monotonic()
             led_status.update()
             requested = False
+            if ft.is_delete():
+                print("Delete file {ft.name}")
+                filename = ft.as_delete()
+                os.unlink(filename)
+                continue
             if ft.is_finish():
                 print("Update completed")
                 break

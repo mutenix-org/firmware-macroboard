@@ -17,6 +17,7 @@ from mutenix_firmware.update import (  # noqa: E402
     FILE_TRANSPORT_DATA,
     FILE_TRANSPORT_END,
     FILE_TRANSPORT_FINISH,
+    FILE_TRANSPORT_DELETE,
     LedStatus,
     File,
     do_update,
@@ -337,4 +338,55 @@ def test_request_chunk_with_different_file_id_and_package():
         + b"\0" * 18,
         2,
     )
-    
+
+
+def test_filetransport_is_delete():
+    data = (
+        FILE_TRANSPORT_DELETE.to_bytes(2, "little")
+        + (1).to_bytes(2, "little")
+        + (10).to_bytes(2, "little")
+        + (0).to_bytes(2, "little")
+        + b"\x0cfilename.txt"
+    )
+    ft = FileTransport(data)
+    assert ft.is_delete() is True
+    assert ft.as_delete() == "filename.txt"
+
+
+def test_do_update_delete_file():
+    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
+    patch("storage.remount")
+    patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
+    patch("time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
+    device_mock = MagicMock()
+    sys.modules["usb_hid"].devices = [device_mock]
+    device_mock.get_last_received_report = mock.Mock(
+        side_effect=[
+            None,
+            FILE_TRANSPORT_DELETE.to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
+            + (0).to_bytes(2, "little")
+            + (0).to_bytes(2, "little")
+            + b"\x0cfilename.txt",
+            FILE_TRANSPORT_FINISH.to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
+            + (0).to_bytes(2, "little")
+            + (0).to_bytes(2, "little")
+            + b"",
+            None,
+        ],
+    )
+    mock_open = mock.mock_open()
+    with patch("builtins.open", mock_open):
+        with patch("os.unlink") as mock_unlink:
+            with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
+                with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
+                    do_update(led)
+
+    mock_unlink.assert_called_once_with("filename.txt")
+    assert led[0] == bytearray((10, 0, 0, 0))
+    assert led[1] == bytearray((10, 0, 0, 0))
+    assert led[2] == bytearray((10, 0, 0, 0))
+    assert led[3] == bytearray((10, 0, 0, 0))
+    assert led[4] == bytearray((10, 0, 0, 0))
+    assert led[5] == bytearray((10, 0, 0, 0))

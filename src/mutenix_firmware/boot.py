@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import myhid
 import storage  # type: ignore
 import supervisor  # type: ignore
@@ -7,7 +9,9 @@ import usb_cdc  # type: ignore
 import usb_hid  # type: ignore
 from debug_on import debug
 from mode import device_mode
-from mybuttons import read_buttons, boot_button_usb_pressed, boot_button_serial_pressed
+from mybuttons import boot_button_serial_pressed
+from mybuttons import boot_button_usb_pressed
+from mybuttons import read_buttons
 
 
 def check_boot_buttons():
@@ -29,6 +33,12 @@ def do_init():
     usb_hid.enable(
         (myhid.stupid_macroboard, myhid.stupid_keyboard),
     )
+
+    try:
+        if os.stat("code.py"):
+            os.unlink("code.py")
+    except OSError:
+        print("no code.py file found. all fine")
 
     check_boot_buttons()
 

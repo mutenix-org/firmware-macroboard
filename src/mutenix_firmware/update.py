@@ -211,7 +211,10 @@ def do_update(led):
             if ft.is_delete():
                 print("Delete file {ft.name}")
                 filename = ft.as_delete()
-                os.unlink(filename)
+                try:
+                    os.unlink(filename)
+                except OSError:
+                    print("File not found")
                 continue
             if ft.is_finish():
                 print("Update completed")

@@ -19,7 +19,7 @@ CHUNK_SIZE = 60
 HEADER_SIZE = 8
 
 TIMEOUT_TRANSFER = 10
-TIMEOUT_UPDATE = 60
+TIMEOUT_UPDATE = 180
 TIME_SHOW_FINAL_STATUS = 4
 TIMEOUT_TRANSFER_REQUEST = 1
 
@@ -106,22 +106,13 @@ class File:
         return f"File: {self.filename}, Size: {self.total_size}, Missing: {len(self.packages)}"
 
 
-def request_chunk(macropad, file):
-    macropad.send_report(
-        bytearray("RQ", "utf-8")
-        + file.id.to_bytes(2, "little")
-        + file.packages[0].to_bytes(2, "little")
-        + b"\0" * 18,
-        2,
-    )
-
-
-def confirm_chunk(macropad, file):
+def confirm_chunk(macropad, filetransport: FileTransport):
     macropad.send_report(
         bytearray("AK", "utf-8")
-        + file.id.to_bytes(2, "little")
-        + file.package.to_bytes(2, "little")
-        + b"\0" * 18,
+        + filetransport.id.to_bytes(2, "little")
+        + filetransport.package.to_bytes(2, "little")
+        + filetransport.type_.to_bytes(1, "little")
+        + b"\0" * 17,
         2,
     )
 
@@ -180,7 +171,6 @@ def do_update(led):
     files = {}
     macropad = usb_hid.devices[0]
     last_transfer = time.monotonic()
-    requested = False
     start_time = last_transfer
 
     invalid_data_ignore_counter = 5
@@ -207,7 +197,6 @@ def do_update(led):
 
             last_transfer = time.monotonic()
             led_status.update()
-            requested = False
             if ft.is_delete():
                 print("Delete file {ft.name}")
                 filename = ft.as_delete()
@@ -237,19 +226,7 @@ def do_update(led):
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
                 del files[ft.id]
-
-        if (
-            time.monotonic() - last_transfer > TIMEOUT_TRANSFER_REQUEST
-            and not requested
-        ):
-            if len(files) > 0:
-                file = next(files.values())
-                print("request file", file.id)
-                request_chunk(file)
-                requested = True
-        if (
-            requested and time.monotonic() - last_transfer > TIMEOUT_TRANSFER
-        ) or time.monotonic() - start_time > TIMEOUT_UPDATE:
+        if time.monotonic() - start_time > TIMEOUT_UPDATE:
             print("Update timed out")
             led_status.error()
             break

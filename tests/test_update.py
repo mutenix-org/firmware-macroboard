@@ -21,7 +21,6 @@ from mutenix_firmware.update import (  # noqa: E402
     LedStatus,
     File,
     do_update,
-    request_chunk,
 )
 
 
@@ -304,40 +303,6 @@ def test_do_update_remount_failure():
     assert led[4] == bytearray((0, 10, 0, 0))
     assert led[5] == bytearray((0, 10, 0, 0))
     sys.modules["storage"].remount.side_effect = None
-
-
-def test_request_chunk():
-    macropad_mock = MagicMock()
-    file_mock = MagicMock()
-    file_mock.id = 1
-    file_mock.packages = [0]
-
-    request_chunk(macropad_mock, file_mock)
-
-    macropad_mock.send_report.assert_called_once_with(
-        bytearray("RQ", "utf-8")
-        + (1).to_bytes(2, "little")
-        + (0).to_bytes(2, "little")
-        + b"\0" * 18,
-        2,
-    )
-
-
-def test_request_chunk_with_different_file_id_and_package():
-    macropad_mock = MagicMock()
-    file_mock = MagicMock()
-    file_mock.id = 2
-    file_mock.packages = [1]
-
-    request_chunk(macropad_mock, file_mock)
-
-    macropad_mock.send_report.assert_called_once_with(
-        bytearray("RQ", "utf-8")
-        + (2).to_bytes(2, "little")
-        + (1).to_bytes(2, "little")
-        + b"\0" * 18,
-        2,
-    )
 
 
 def test_filetransport_is_delete():

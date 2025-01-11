@@ -9,6 +9,10 @@ This repository contains the firmware for the mutenix.de MacroBoard.
 - Boot option selection (Enable Serial, Enable Filesystem)
 - Automated Update (no FS mount necessary)
 
+## Updating firmware of first samples (without automatic update support)
+
+See [Updating first samples](docs/updating-old.md)
+
 ## Button Ids
 
 Based on the hardware Version the buttons are ordered in the following way:
@@ -81,11 +85,12 @@ Based on the hardware Version the buttons are ordered in the following way:
 
 ## Links
 
-- [Host Software](../software-teams-python)
+- [Host Software](../software-host)
 - [MacroBoard Hardware](../hardware)
 
 
 ## Create a release
 
-- Create a tag
-- run the script `scripts/make_release.sh`
+- Update `pyproject.toml`
+- run the script `scripts/prepare_release.sh`
+- push the tag to github

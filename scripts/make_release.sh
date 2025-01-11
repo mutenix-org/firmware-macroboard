@@ -3,7 +3,7 @@
 VERSION=$(grep -oE '^version = "[^"]+' pyproject.toml | sed 's/version = "//')
 
 # Check if the working directory is clean
-if ! git diff-index --quiet HEAD --; then
+if [ -n "$(git status --porcelain)" ]; then
     echo "Working directory is not clean. Please commit or stash your changes."
     exit 1
 fi
@@ -12,7 +12,7 @@ fi
 IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 
 # Update version.py with the new version
-cat <<EOF > /Users/matthiasbilger/git/mutenix/firmware-macro-board/src/mutenix_firmware/version.py
+cat <<EOF > src/mutenix_firmware/version.py
 from __future__ import annotations
 
 MAJOR = $MAJOR
@@ -21,7 +21,7 @@ PATCH = $PATCH
 EOF
 
 # Check if the working directory is clean
-if ! git diff-index --quiet HEAD --; then
+if [ -n "$(git status --porcelain)" ]; then
     echo "Version in version.py was not correct, aborting."
     echo "Have you run prepare_release.sh?"
     exit 1
@@ -45,6 +45,6 @@ mkdir -p release
 OUTPUT_FILE="release/${VERSION}.tar.gz"
 
 # Create a tar.gz archive containing all files in src/mutenix_firmware
-tar -czvf "$OUTPUT_FILE" -C src/mutenix_firmware *
+tar -czvf "$OUTPUT_FILE" -C src/mutenix_firmware .
 
 echo "Release package created: $OUTPUT_FILE"

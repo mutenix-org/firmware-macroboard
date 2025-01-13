@@ -1,14 +1,9 @@
-from __future__ import annotations
-
 import time
 
-import debug_on
-import myhid
+import supervisor  # type: ignore
 import usb_hid  # type: ignore
 from hardware import hardware_variant
-from leds import ColorLeds
-from leds import Rainbow
-from mybuttons import buttons
+from log import log
 from protocol import InMessage
 from protocol import OutMessage
 from protocol import Ping
@@ -16,6 +11,7 @@ from protocol import PrepareUpdate
 from protocol import Reset
 from protocol import SetColor
 from protocol import Unknown
+from protocol import UpdateConfig
 from update import do_update
 
 COMBO_ACTIVATION_TIME = 500_000_000
@@ -23,13 +19,6 @@ COMMUNICATION_TIMEOUT = 5.5
 
 update_mode = False
 macropad = usb_hid.devices[0]
-
-led = ColorLeds(hardware_variant.led_pin, hardware_variant.led_count)
-
-
-def log(*args, **kwargs):
-    if debug_on.debug:
-        print(*args, **kwargs)
 
 
 def do_reset():  # pragma: no cover
@@ -39,7 +28,23 @@ def do_reset():  # pragma: no cover
 
 
 last_communication: float = 0.0
-rainbow = Rainbow(led, 1, 5, 0.025)
+
+
+def update_config(update):
+    with open("/debug_on.py", "r") as f:
+        lines = f.readlines()
+
+    with open("/debug_on.py", "w") as f:
+        for line in lines:
+            if "=" not in line:
+                f.write(line)
+                continue
+            name, value = map(str.strip, line.split("="))
+            if name == "debug" and update.update_debug is not None:
+                value = str(update.activate_debug)
+            if name == "filesystem" and update.update_filesystem is not None:
+                value = str(update.activate_filesystem)
+            f.write(f"{name} = {value}\n")
 
 
 def handle_received_report(data):
@@ -50,7 +55,7 @@ def handle_received_report(data):
         log("ping")
     elif isinstance(p, SetColor):
         if p.buttonid < 6 and p.buttonid >= 1:
-            led[6 - p.buttonid] = p.color
+            hardware_variant.leds[p.buttonid] = p.color
         log(f"led {p.buttonid} set to {p.color}")
     elif isinstance(p, PrepareUpdate):
         log("Prepare update")
@@ -59,6 +64,9 @@ def handle_received_report(data):
     elif isinstance(p, Reset):
         log("Reset")
         do_reset()
+    elif isinstance(p, UpdateConfig):
+        log(f"Update config {p.activate_debug}, {p.activate_filesystem}")
+        update_config(p)
     elif isinstance(p, Unknown):
         log(f"Unknown message {p.data}")
 
@@ -70,7 +78,7 @@ class Combos:
 
     def check(self):
         for c, f in self.combos.items():
-            if all([buttons[i].pressed for i in c]):
+            if all([hardware_variant.buttons[i].pressed for i in c]):
                 if self.combo_matched_time[c] == 0:
                     self.combo_matched_time[c] = time.monotonic_ns()
                 if (
@@ -79,71 +87,75 @@ class Combos:
                 ):
                     f()
                     for i in c:
-                        buttons[i].handled()
+                        hardware_variant.buttons[i].handled()
                     self.combo_matched_time = {}
             else:
                 self.combo_matched_time[c] = 0
 
 
-def send_url():
-    keyboard = myhid.stupid_keyboard
-    url = "https://mutenix.de"
-    for char in url:
-        report = [0x00] * 8
-        if "a" <= char <= "z":
-            report[2] = ord(char) - ord("a") + 0x04
-        elif "A" <= char <= "Z":
-            report[0] = 0x02  # Left Shift
-            report[2] = ord(char) - ord("A") + 0x04
-        elif char == ":":
-            report[0] = 0x02  # Left Shift
-            report[2] = 0x33  # Colon
-        elif char == "/":
-            report[2] = 0x38  # Slash
-        elif char == ".":
-            report[2] = 0x37  # Period
-        keyboard.send_report(bytearray(report), 3)
-        keyboard.send_report(bytearray([0x00] * 8), 3)  # Release key
-
-
 combos = Combos(
     {
         (0, 1, 4): do_reset,
-        (3, 4): send_url,
     },
 )
 
+hardware_variant.setup_bluetooth()
+
 while True:
-    try:
-        data = macropad.get_last_received_report(1)
-    except Exception as e:
-        log(f"USB receiving not working, but who cares {e}")
+    data = None
+    if hardware_variant.bluetooth_connected:
+        try:
+            data = hardware_variant.read_bluetooth_hid()
+            if data:
+                log("data from bt", data)
+        except Exception as e:
+            log(f"Bluetooth receiving not working, but who cares {e}")
+    elif supervisor.runtime.usb_connected:
+        try:
+            data = macropad.get_last_received_report(1)
+            if data:
+                log("data from usb", data)
+        except Exception as e:
+            log(f"USB receiving not working, but who cares {e}")
     try:
         if data:
-            if rainbow.was_active():
-                rainbow.off()
-            log("data", data)
+            # hardware_variant.leds.rainbow_off()
             if last_communication == 0:
-                InMessage.status_request().send(macropad)
+                if hardware_variant.bluetooth_connected:
+                    log("send bt")
+                    hardware_variant.send_bluetooth_hid(
+                        InMessage.status_request()._data,
+                    )
+                elif supervisor.runtime.usb_connected:
+                    log("send usb")
+                    InMessage.status_request().send(macropad)
             last_communication = time.monotonic()
             handle_received_report(data)
-            led[0] = ColorLeds.green
+            hardware_variant.leds[0] = "green"
 
         if (time.monotonic() - last_communication) > COMMUNICATION_TIMEOUT:
-            led[0] = ColorLeds.purple
-            rainbow.next()
+            hardware_variant.leds[0] = "red"
+            # hardware_variant.leds.rainbow_next()
             last_communication = 0
 
-        for b in buttons:
+        for b in hardware_variant.buttons:
             b.read()
             if b.changed_state:
-                log(f"Button {b._pin} changed, send status")
-                InMessage.button(b).send(macropad)
+                log(f"Button {b._pin} changed")
+                if hardware_variant.bluetooth_connected:
+                    log("send bt")
+                    hardware_variant.send_bluetooth_hid(InMessage.button(b)._data)
+                elif supervisor.runtime.usb_connected:
+                    log("send usb")
+                    InMessage.button(b).send(macropad)
         combos.check()
 
     except OSError as e:
         log(f"USB send not working, but who cares {e}")
 
-    if update_mode:
-        do_update(led)
-        update_mode = False
+    hardware_variant.check_bluetooth()
+
+    if supervisor.runtime.usb_connected:
+        if update_mode:
+            do_update(hardware_variant)
+            update_mode = False

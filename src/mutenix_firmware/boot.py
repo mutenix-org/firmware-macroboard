@@ -1,38 +1,40 @@
-from __future__ import annotations
-
 import os
+import time
 
+import debug_on
+import device_info
 import myhid
 import storage  # type: ignore
 import supervisor  # type: ignore
 import usb_cdc  # type: ignore
 import usb_hid  # type: ignore
-from debug_on import debug
-from mode import device_mode
-from mybuttons import boot_button_serial_pressed
-from mybuttons import boot_button_usb_pressed
-from mybuttons import read_buttons
+from hardware import hardware_variant
 
 
 def check_boot_buttons():
     # Read the buttons in case a boot option button has been pressed
-    read_buttons()
+    hardware_variant.read_buttons()
+    time.sleep(0.2)
+    hardware_variant.read_buttons()
 
-    device_mode.storage_enabled = boot_button_serial_pressed()
-    device_mode.serial_enabled = boot_button_usb_pressed() or debug
+    storage_enabled = hardware_variant.boot_button_usb_pressed() or debug_on.filesystem
+    serial_enabled = hardware_variant.boot_button_serial_pressed() or debug_on.serial
+    print("serial", serial_enabled)
+    print("storage", storage_enabled)
 
-    if not device_mode.serial_enabled:
+    if not serial_enabled:
         usb_cdc.disable()
 
-    if not device_mode.storage_enabled:
+    if not storage_enabled:
         storage.disable_usb_drive()  # disable CIRCUITPY drive
 
 
 def do_init():
-    supervisor.set_usb_identification("m42e.de", "macropad", pid=8323)
-    usb_hid.enable(
-        (myhid.stupid_macroboard, myhid.stupid_keyboard),
-    )
+    try:
+        supervisor.set_usb_identification(device_info.MANUFACTURER, device_info.PRODUCT)
+        usb_hid.enable((myhid.stupid_macroboard,))
+    except RuntimeError:
+        print("Failed to set USB identification, expected?")
 
     try:
         if os.stat("code.py"):

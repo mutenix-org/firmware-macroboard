@@ -1,13 +1,11 @@
-from __future__ import annotations
-
 import os
 import time
 
 import storage  # type: ignore
 import supervisor  # type: ignore
 import usb_hid  # type: ignore
-from leds import ColorLeds
-from leds import mix_color
+from hardware import mix_color
+from log import log
 
 FILE_TRANSPORT_START = 1
 FILE_TRANSPORT_DATA = 2
@@ -50,9 +48,9 @@ class FileTransport:
         if self.type_ != FILE_TRANSPORT_START:
             raise ValueError("Not a start packet")
         filename_length = self.content[0]
-        print("Filename length", filename_length)
+        log("Filename length", filename_length)
         filename = self.content[1 : 1 + filename_length].decode("utf-8")
-        print("Filename", filename)
+        log("Filename", filename)
         size_length = self.content[1 + filename_length]
         total_size = int.from_bytes(
             self.content[2 + filename_length : 2 + filename_length + size_length],
@@ -64,7 +62,7 @@ class FileTransport:
         if self.type_ != FILE_TRANSPORT_DELETE:
             raise ValueError("Not a delete packet")
         filename_length = self.content[0]
-        print("Filename length", filename_length)
+        log("Filename length", filename_length)
         filename = self.content[1 : 1 + filename_length].decode("utf-8")
         return filename
 
@@ -92,6 +90,9 @@ class File:
             length = self.total_size % FileTransport.content_length
         else:
             length = FileTransport.content_length
+        if data.package not in self.packages:
+            log("Package already received")
+            return
         self.content[
             data.package * FileTransport.content_length : data.package
             * FileTransport.content_length
@@ -107,12 +108,27 @@ class File:
 
 
 def confirm_chunk(macropad, filetransport: FileTransport):
-    macropad.send_report(
+    data = (
         bytearray("AK", "utf-8")
         + filetransport.id.to_bytes(2, "little")
         + filetransport.package.to_bytes(2, "little")
         + filetransport.type_.to_bytes(1, "little")
-        + b"\0" * 17,
+        + b"\0" * 17
+    )
+
+    log("Confirming chunk", filetransport.package, len(data))
+    macropad.send_report(
+        data,
+        2,
+    )
+
+
+def send_mode(macropad):
+    data = bytearray("MO", "utf-8") + (1).to_bytes(1, "little") + b"\0" * 21
+
+    log("Send Mode")
+    macropad.send_report(
+        data,
         2,
     )
 
@@ -127,40 +143,40 @@ class LedStatus:
         self.led_status += 1
         if self.led_status >= 100:
             self.led_status = 0
-        for i in range(1, 6):
+        for i in range(1, len(self.led)):
             if self.led_status // 10 == (i - 1):
                 self.led[i] = mix_color(
-                    ColorLeds.blue,
-                    ColorLeds.green,
+                    "blue",
+                    "green",
                     self.led_status % 10,
                     10,
                 )
             if self.led_status // 10 == (i - 1 + 5):
                 self.led[i] = mix_color(
-                    ColorLeds.green,
-                    ColorLeds.blue,
+                    "green",
+                    "blue",
                     self.led_status % 10,
                     10,
                 )
 
     def running(self):
         if int(self.counter // 100) % 2 == 0:
-            self.led[0] = ColorLeds.blue
+            self.led[0] = "blue"
         else:
-            self.led[0] = ColorLeds.green
+            self.led[0] = "green"
         self.counter += 1
 
     def error(self):
         for i in range(0, 6):
-            self.led[i] = ColorLeds.red
+            self.led[i] = "red"
 
     def success(self):
         for i in range(0, 6):
-            self.led[i] = ColorLeds.green
+            self.led[i] = "green"
 
 
-def do_update(led):
-    led_status = LedStatus(led)
+def do_update(hardware):
+    led_status = LedStatus(hardware.leds)
     try:
         storage.remount("/", readonly=False)
     except RuntimeError:
@@ -175,21 +191,22 @@ def do_update(led):
 
     invalid_data_ignore_counter = 5
 
-    print("Prepared for update")
+    log("Prepared for update")
+    send_mode(macropad)
     while True:
         data = macropad.get_last_received_report(2)
         led_status.running()
         if data:
-            print("Data received", last_transfer)
+            log("Data received", last_transfer)
             ft = FileTransport(data)
             if not ft.is_valid():
                 invalid_data_ignore_counter -= 1
                 if invalid_data_ignore_counter == 0:
-                    print("Cannot recover from invalid data, aborting")
+                    log("Cannot recover from invalid data, aborting")
                     led_status.error()
                     time.sleep(TIME_SHOW_FINAL_STATUS)
                     break
-                print(
+                log(
                     f"Invalid data received {data}, ignoring it {invalid_data_ignore_counter} more times",
                 )
                 continue
@@ -198,36 +215,36 @@ def do_update(led):
             last_transfer = time.monotonic()
             led_status.update()
             if ft.is_delete():
-                print("Delete file {ft.name}")
+                log("Delete file {ft.name}")
                 filename = ft.as_delete()
                 try:
                     os.unlink(filename)
                 except OSError:
-                    print("File not found")
+                    log("File not found")
                 continue
             if ft.is_finish():
-                print("Update completed")
+                log("Update completed")
                 break
             if ft.is_end():
                 if ft.id in files:
-                    print("File complete")
+                    log("File complete")
                     del files[ft.id]
                 else:
-                    print("File not found")
+                    log("File not found")
                 continue
             if ft.id not in files:
                 files[ft.id] = File(ft)
-                print("New file", files[ft.id])
+                log("New file", files[ft.id])
             else:
                 files[ft.id].write(ft)
-            print(f"{files[ft.id].filename}[ft.id]", ft.package, "/", ft.total_packages)
+            log(f"{files[ft.id].filename}[{ft.id}]", ft.package, "/", ft.total_packages)
             if files[ft.id].is_complete():
-                print("File complete, writing", files[ft.id].filename)
+                log("File complete, writing", files[ft.id].filename)
                 with open(files[ft.id].filename, "wb") as f:
                     f.write(files[ft.id].content)
                 del files[ft.id]
         if time.monotonic() - start_time > TIMEOUT_UPDATE:
-            print("Update timed out")
+            log("Update timed out")
             led_status.error()
             break
     led_status.success()

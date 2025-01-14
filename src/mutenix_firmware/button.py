@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import digitalio  # type: ignore
 from utils import EventTime
 
@@ -20,6 +18,7 @@ class Button:
         self._changed_state = False
         self._pushEventTime = EventTime()
         self._id = id
+        self._counter = 0
 
     @property
     def state(self):
@@ -44,6 +43,7 @@ class Button:
                 self._pressed = True
                 self._released = False
                 self._press_handled = False
+                self._counter += 1
             else:
                 self._released = True
                 self._pressed = False
@@ -72,6 +72,10 @@ class Button:
         retval = self._changed_state
         self._changed_state = False
         return retval
+
+    @property
+    def counter(self):
+        return self._counter
 
     def handled(self):
         self._press_handled = True

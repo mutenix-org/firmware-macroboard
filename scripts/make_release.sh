@@ -44,10 +44,11 @@ mkdir -p release
 # Define the output file name
 OUTPUT_FILE="release/${VERSION}.tar.gz"
 
-# Create a tar.gz archive containing all files in src/mutenix_firmware
+cp -r lib src/mutenix_firmware/lib
+
+# Create a tar.gz archive containing all files in src/mutenix_firmware and the lib folder
 tar -czvf "$OUTPUT_FILE" -C src/mutenix_firmware .
 
-# Add the lib folder to the tar.gz archive
-tar --append -f "$OUTPUT_FILE" -C . lib
+rm -rf src/mutenix_firmware/lib
 
 echo "Release package created: $OUTPUT_FILE"

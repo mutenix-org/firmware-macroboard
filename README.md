@@ -85,8 +85,8 @@ Based on the hardware Version the buttons are ordered in the following way:
 
 ## Links
 
-- [Host Software](../software-host)
-- [MacroBoard Hardware](../hardware)
+- [Host Software](https://github.com/mutenix-org/software-host)
+- [MacroBoard Hardware](https://github.com/mutenix-org/hardware-macropad)
 
 
 ## Create a release

@@ -18,7 +18,7 @@ def check_boot_buttons():
     hardware_variant.read_buttons()
 
     storage_enabled = hardware_variant.boot_button_usb_pressed() or debug_on.filesystem
-    serial_enabled = hardware_variant.boot_button_serial_pressed() or debug_on.debug
+    serial_enabled = hardware_variant.boot_button_serial_pressed() or debug_on.serial
     print("serial", serial_enabled)
     print("storage", storage_enabled)
 

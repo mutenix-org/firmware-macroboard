@@ -1,21 +1,23 @@
 import os
 import time
 
-import adafruit_ble
+import adafruit_ble  # type: ignore
 import board
 import device_info
 import digitalio
 import myhid
 import neopixel_write  # type: ignore
 import version
-from _bleio import adapter
-from adafruit_ble.advertising import Advertisement
-from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
-from adafruit_ble.services.standard.device_info import DeviceInfoService
-from adafruit_ble.services.standard.hid import HIDService
-from adafruit_ble.services.standard.hid import ReportIn
-from adafruit_ble.services.standard.hid import ReportOut
+from _bleio import adapter  # type: ignore
+from adafruit_ble.advertising import Advertisement  # type: ignore
+from adafruit_ble.advertising.standard import ProvideServicesAdvertisement  # type: ignore
+from adafruit_ble.services.standard import BatteryService  # type: ignore
+from adafruit_ble.services.standard.device_info import DeviceInfoService  # type: ignore
+from adafruit_ble.services.standard.hid import HIDService  # type: ignore
+from adafruit_ble.services.standard.hid import ReportIn  # type: ignore
+from adafruit_ble.services.standard.hid import ReportOut  # type: ignore
 from button import Button
+from log import log
 
 
 FIVE_BUTTON_USB = 0x02
@@ -191,7 +193,9 @@ class HardwareOptions:
     def __init__(self):
         self.board_id = board.board_id
         self._bluetooth = None
+        self._ble_advertising = False
         self._last_read = None
+        self._battery_level = 10
         self._setup_hardware_config()
         self._set_buttons()
         self._init_leds()
@@ -303,7 +307,8 @@ class HardwareOptions:
                 self.led_pin,
                 self.led_count,
                 GRBW,
-                rainbow=list(range(1, 6)),
+                [0, 5, 4, 3, 2, 1],
+                rainbow=list(range(6, 1)),
             )
 
     @property
@@ -323,13 +328,19 @@ class HardwareOptions:
         adapter.name = device_info.MANUFACTURER
         self._hid = HIDService(myhid.MACROBOARD_DESCRIPTOR2)
 
-        _ = DeviceInfoService(
+        hardware_revision = "V1.0"
+
+        self._device_info_service = DeviceInfoService(
             model_number=device_info.PRODUCT,
-            hardware_revision="V1.0",
-            firmware_revision=str(os.uname().version),
+            hardware_revision=hardware_revision,
+            firmware_revision=os.uname().version,
             software_revision=f"{version.MAJOR}.{version.MINOR}.{version.PATCH}",
             manufacturer=device_info.MANUFACTURER,
+            pnp_id=(0x01, device_info.VID, device_info.PID, 0x0001),
         )
+        self._batteryservice = BatteryService()
+        self._batteryservice.level = self._battery_level
+
         self._advertisement = ProvideServicesAdvertisement(self._hid)
         self._advertisement.appearance = 961
         self._advertisement.short_name = device_info.MANUFACTURER
@@ -344,8 +355,21 @@ class HardwareOptions:
     def check_bluetooth(self):
         if not self.has_bluetooth:
             return
-        if not self._bluetooth.connected and not self._bluetooth.advertising:
+        if not self._bluetooth.connected and not self._ble_advertising:
             self._bluetooth.start_advertising(self._advertisement, self._scan_response)
+            self._ble_advertising = True
+            log("Bluetooth advertising")
+
+        if self._bluetooth.connected:
+            self._ble_advertising = False
+
+        if self._bluetooth.connected:
+            self.leds[11] = "green"
+
+        elif self._bluetooth.advertising:
+            self.leds[11] = "blue"
+        else:
+            self.leds[11] = "red"
 
     def _setup_hid_endpoints(self):
         self._hid_communication_out = next(
@@ -374,7 +398,13 @@ class HardwareOptions:
 
     @property
     def bluetooth_connected(self):
+        if not self.has_bluetooth:
+            return False
         return self._bluetooth.connected
+
+    def set_battery_level(self, value):
+        self._battery_level = value
+        self._batteryservice.level = self._battery_level
 
 
 hardware_variant = HardwareOptions()

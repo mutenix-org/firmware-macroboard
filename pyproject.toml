@@ -1,6 +1,6 @@
 [project]
 name = "mutenix-firmware"
-version = "0.3.0"
+version = "0.4.0"
 description = "Firmware for the mutenix hardware."
 readme = "README.md"
 authors = [

@@ -1,11 +1,13 @@
-from __future__ import annotations
-
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import sys
 from unittest import mock
 
-sys.modules["hardware"] = mock.Mock()
-sys.modules["hardware"].hardware_variant = mock.Mock()  # type: ignore[attr-defined]
-sys.modules["hardware"].hardware_variant.hardware_variant = 1  # type: ignore[attr-defined]
+sys.modules["hardware"] = mock.Mock()  # type: ignore[attr-defined]
+hw = sys.modules["hardware"]
+hw.hardware_variant = mock.Mock()  # type: ignore[attr-defined]
+hw.hardware_variant.hardware_variant = 1
+
 from mutenix_firmware.protocol import (  # noqa: E402
     OutMessage,
     Ping,

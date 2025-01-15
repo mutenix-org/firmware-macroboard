@@ -94,3 +94,9 @@ Based on the hardware Version the buttons are ordered in the following way:
 - Update `pyproject.toml`
 - run the script `scripts/prepare_release.sh`
 - push the tag to github
+
+## License
+
+All files are licensed under MIT.
+
+The library included in the lib directories may contain their own license.

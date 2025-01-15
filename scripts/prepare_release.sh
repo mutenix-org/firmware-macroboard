@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 # Check if the working directory is clean
 if ! git diff-index --quiet HEAD --; then
     echo "Working directory is not clean. Please commit or stash your changes."
@@ -12,6 +14,8 @@ IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 
 # Update version.py with the new version
 cat <<EOF > src/mutenix_firmware/version.py
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 from __future__ import annotations
 
 MAJOR = $MAJOR
@@ -22,7 +26,7 @@ EOF
 # Check if the working directory is clean
 if ! git diff-index --quiet HEAD --; then
     git add src/mutenix_firmware/version.py
-    git commit -am "chore: Update version.py to $VERSION" 
+    git commit -am "chore: Update version.py to $VERSION"
 fi
 
 

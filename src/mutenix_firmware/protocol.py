@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import version as v
 from button import Button
 from hardware import hardware_variant

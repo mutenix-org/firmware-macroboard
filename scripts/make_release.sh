@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
+#
 # Read the version from pyproject.toml
 VERSION=$(grep -oE '^version = "[^"]+' pyproject.toml | sed 's/version = "//')
 
@@ -13,6 +16,8 @@ IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 
 # Update version.py with the new version
 cat <<EOF > src/mutenix_firmware/version.py
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 from __future__ import annotations
 
 MAJOR = $MAJOR

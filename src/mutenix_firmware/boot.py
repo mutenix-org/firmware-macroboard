@@ -39,8 +39,18 @@ def check_boot_buttons():
 
 def do_init():
     try:
-        supervisor.set_usb_identification(device_info.MANUFACTURER, device_info.PRODUCT)
+        supervisor.set_usb_identification(
+            manufacturer=device_info.MANUFACTURER,
+            product=device_info.PRODUCT,
+            vid=device_info.VID,
+            pid=device_info.PID,
+        )
         usb_hid.enable((myhid.stupid_macroboard,))
+        print("USB identification set")
+        print("manufacturer", device_info.MANUFACTURER)
+        print("product", device_info.PRODUCT)
+        print("vid", device_info.VID)
+        print("pid", device_info.PID)
     except RuntimeError:
         print("Failed to set USB identification, expected?")
 

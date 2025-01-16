@@ -30,6 +30,12 @@ def check_boot_buttons():
     if not storage_enabled:
         storage.disable_usb_drive()  # disable CIRCUITPY drive
 
+    force_update = hardware_variant.boot_button_update_pressed()
+
+    if force_update:
+        print("Force update")
+        supervisor.set_next_code_file("updae.py")
+
 
 def do_init():
     try:

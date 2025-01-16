@@ -2,10 +2,12 @@
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import os
 import time
+from io import BufferedWriter
 
 import storage  # type: ignore
 import supervisor  # type: ignore
 import usb_hid  # type: ignore
+from hardware import hardware_variant
 from hardware import mix_color
 from log import log
 
@@ -85,9 +87,11 @@ class File:
         self.filename, self.total_size = first_element.as_start()
         self.id = first_element.id
         self.packages = list(range(first_element.total_packages + 1))
-        self.content = bytearray((0,) * self.total_size)
+        self._file: BufferedWriter | None = None
 
     def write(self, data: FileTransport):
+        if self._file is None:
+            self._file = open(self.filename, "wb")
         if data.package == data.total_packages:
             length = self.total_size % FileTransport.content_length
         else:
@@ -95,12 +99,11 @@ class File:
         if data.package not in self.packages:
             log("Package already received")
             return
-        self.content[
-            data.package * FileTransport.content_length : data.package
-            * FileTransport.content_length
-            + length
-        ] = data.content[:length]
+
+        self._file.write(data.content[:length])
         self.packages.remove(data.package)
+        if self.is_complete():
+            self._file.close()
 
     def is_complete(self):
         return len(self.packages) == 0
@@ -115,7 +118,7 @@ def confirm_chunk(macropad, filetransport: FileTransport):
         + filetransport.id.to_bytes(2, "little")
         + filetransport.package.to_bytes(2, "little")
         + filetransport.type_.to_bytes(1, "little")
-        + b"\0" * 17
+        + b"\0" * 29
     )
 
     log("Confirming chunk", filetransport.package, len(data))
@@ -126,7 +129,7 @@ def confirm_chunk(macropad, filetransport: FileTransport):
 
 
 def send_mode(macropad):
-    data = bytearray("MO", "utf-8") + (1).to_bytes(1, "little") + b"\0" * 21
+    data = bytearray("MO", "utf-8") + (1).to_bytes(1, "little") + b"\0" * 33
 
     log("Send Mode")
     macropad.send_report(
@@ -169,15 +172,16 @@ class LedStatus:
         self.counter += 1
 
     def error(self):
-        for i in range(0, 6):
+        for i in range(0, len(self.led)):
             self.led[i] = "red"
 
     def success(self):
-        for i in range(0, 6):
+        for i in range(0, len(self.led)):
             self.led[i] = "green"
 
 
-def do_update(hardware):
+def do_update():
+    hardware = hardware_variant
     led_status = LedStatus(hardware.leds)
     try:
         storage.remount("/", readonly=False)
@@ -235,19 +239,32 @@ def do_update(hardware):
                     log("File not found")
                 continue
             if ft.id not in files:
+                # to ensure that we do not overwrite the update file, while updating,
+                # we fake the name here
                 files[ft.id] = File(ft)
+                if files[ft.id].filename == "update.py":
+                    files[ft.id].filename = "update.py.tmp"
                 log("New file", files[ft.id])
             else:
                 files[ft.id].write(ft)
             log(f"{files[ft.id].filename}[{ft.id}]", ft.package, "/", ft.total_packages)
             if files[ft.id].is_complete():
-                log("File complete, writing", files[ft.id].filename)
-                with open(files[ft.id].filename, "wb") as f:
-                    f.write(files[ft.id].content)
-                del files[ft.id]
+                log("File complete, closing")
+                # we need to revert the update.py trick here, this is the critical part in the update and
+                # worst case these lines would brick the device (not really as you could enter the file mode)
+                if files[ft.id].filename == "update.py.tmp":
+                    os.rename("update.py.tmp", "update.py")
+        if time.monotonic() - last_transfer > TIMEOUT_TRANSFER:
+            log("Transfer timed out")
+            led_status.error()
+            break
+
         if time.monotonic() - start_time > TIMEOUT_UPDATE:
             log("Update timed out")
             led_status.error()
             break
     led_status.success()
     supervisor.runtime.autoreload = True
+
+
+do_update()

@@ -5,4 +5,4 @@
 # make sure only simple assignments are used
 serial = True
 debug = True
-filesystem = True
+filesystem = False

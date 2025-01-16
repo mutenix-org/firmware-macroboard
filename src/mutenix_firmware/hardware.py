@@ -191,6 +191,7 @@ class HardwareOptions:
 
     BOOT_USB_BUTTON = 0
     BOOT_SERIAL_BUTTON = 1
+    BOOT_UPDATE_BUTTON = 1
 
     def __init__(self):
         self.board_id = board.board_id
@@ -280,6 +281,9 @@ class HardwareOptions:
 
     def boot_button_serial_pressed(self):
         return self.buttons[self.BOOT_SERIAL_BUTTON].state
+
+    def boot_button_update_pressed(self):
+        return self.buttons[self.BOOT_UPDATE_BUTTON].state
 
     def _is_ten_button_variant(self):
         variant = digitalio.DigitalInOut(self.variant_pin)

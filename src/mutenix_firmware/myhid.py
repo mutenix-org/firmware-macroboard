@@ -84,6 +84,6 @@ stupid_macroboard = usb_hid.Device(
     usage_page=0x01,  # Consumer Devices
     usage=0x80,  # Consumer Control
     report_ids=(1, 2),  # Descriptor uses report ID 2.
-    in_report_lengths=(IN_REPORT_LENGTH, 24),
+    in_report_lengths=(IN_REPORT_LENGTH, 36),
     out_report_lengths=(OUT_REPORT_LENGTH, 60),
 )

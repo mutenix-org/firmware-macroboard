@@ -6,13 +6,15 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest.mock import PropertyMock
 
-import pytest
 
 sys.modules["supervisor"] = mock.Mock()
 sys.modules["usb_hid"] = mock.MagicMock()
 sys.modules["storage"] = mock.Mock()
 sys.modules["board"] = mock.MagicMock()
-
+sys.modules["hardware"] = mock.Mock()  # type: ignore[attr-defined]
+hw = sys.modules["hardware"]
+hw.hardware_variant = mock.Mock()  # type: ignore[attr-defined]
+hw.hardware_variant.leds = ["black" for _ in range(13)]
 from mutenix_firmware.update import (  # noqa: E402
     FileTransport,
     FILE_TRANSPORT_START,
@@ -109,7 +111,6 @@ def test_file_initialization():
     assert file.total_size == 1048576
     assert file.id == 1
     assert file.packages == list(range(11))
-    assert len(file.content) == 1048576
 
 
 def test_file_write():
@@ -121,21 +122,22 @@ def test_file_write():
         + b"\x0cfilename.txt\x04\x00\x00\x10"
     )
     ft_start = FileTransport(start_data)
-    file = File(ft_start)
+    with patch("builtins.open", mock.mock_open()) as mock_open:
+        mock_file = mock_open.return_value
+        file = File(ft_start)
+        mock_open.assert_not_called()
 
-    data = (
-        FILE_TRANSPORT_DATA.to_bytes(2, "little")
-        + (1).to_bytes(2, "little")
-        + (10).to_bytes(2, "little")
-        + (1).to_bytes(2, "little")
-        + b"12345678"
-    )
-    ft_data = FileTransport(data)
-    file.write(ft_data)
-    assert (
-        file.content[FileTransport.content_length : FileTransport.content_length + 8]
-        == b"12345678"
-    )
+        data = (
+            FILE_TRANSPORT_DATA.to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
+            + (10).to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
+            + b"12345678"
+        )
+        ft_data = FileTransport(data)
+        file.write(ft_data)
+        mock_open.assert_called_once_with("filename.txt", "wb")
+        mock_file.write.assert_called_once_with(b"12345678")
     assert 1 not in file.packages
 
 
@@ -171,48 +173,7 @@ def test_ledstatus_initialization():
     assert led_status.led == led
 
 
-@pytest.mark.skip
-def test_ledstatus_update():
-    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
-    led_status = LedStatus(led)
-
-    for _ in range(101):
-        led_status.update()
-
-    assert led_status.led_status == 1
-    assert led[1] == bytearray((9, 0, 1, 0))
-    assert led[2] == bytearray((9, 0, 1, 0))
-
-    for _ in range(9):
-        led_status.update()
-
-    assert led_status.led_status == 10
-    assert led[1] == bytearray((1, 0, 9, 0))
-    assert led[2] == bytearray((10, 0, 0, 0))
-
-    for _ in range(10):
-        led_status.update()
-
-    assert led_status.led_status == 20
-    assert led[1] == bytearray((1, 0, 9, 0))
-    assert led[2] == bytearray((1, 0, 9, 0))
-
-    for _ in range(70):
-        led_status.update()
-
-    assert led_status.led_status == 90
-    assert led[5] == bytearray((0, 0, 10, 0))
-
-    for _ in range(10):
-        led_status.update()
-
-    assert led_status.led_status == 0
-    assert led[1] == bytearray((10, 0, 0, 0))
-
-
-@pytest.mark.skip
 def test_do_update_successful_update():
-    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
     patch("storage.remount")
     patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
     patch("time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
@@ -248,23 +209,15 @@ def test_do_update_successful_update():
     with patch("builtins.open", mock_open):
         with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
             with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
-                do_update(led)
+                do_update()
 
-    assert led[0] == bytearray((10, 0, 0, 0))
-    assert led[1] == bytearray((10, 0, 0, 0))
-    assert led[2] == bytearray((10, 0, 0, 0))
-    assert led[3] == bytearray((10, 0, 0, 0))
-    assert led[4] == bytearray((10, 0, 0, 0))
-    assert led[5] == bytearray((10, 0, 0, 0))
     mock_open.assert_called_once_with("filename.txt", "wb")
     mock_open().write.assert_called_once_with(
         b"12345678",
     )
 
 
-@pytest.mark.skip
 def test_do_update_timeout():
-    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
     patch("storage.remount")
     patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
     patch(
@@ -279,19 +232,10 @@ def test_do_update_timeout():
     with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
         with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
             with patch("mutenix_firmware.update.TIME_SHOW_FINAL_STATUS", 0.1):
-                do_update(led)
-
-    assert led[0] == bytearray((10, 0, 0, 0))
-    assert led[1] == bytearray((10, 0, 0, 0))
-    assert led[2] == bytearray((10, 0, 0, 0))
-    assert led[3] == bytearray((10, 0, 0, 0))
-    assert led[4] == bytearray((10, 0, 0, 0))
-    assert led[5] == bytearray((10, 0, 0, 0))
+                do_update()
 
 
-@pytest.mark.skip
 def test_do_update_remount_failure():
-    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
     sys.modules["storage"].remount.side_effect = RuntimeError
     patch("time.sleep")
     device_mock = MagicMock()
@@ -301,13 +245,8 @@ def test_do_update_remount_failure():
     with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
         with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
             with patch("mutenix_firmware.update.TIME_SHOW_FINAL_STATUS", 0.1):
-                do_update(led)
+                do_update()
 
-    assert led[1] == bytearray((0, 10, 0, 0))
-    assert led[2] == bytearray((0, 10, 0, 0))
-    assert led[3] == bytearray((0, 10, 0, 0))
-    assert led[4] == bytearray((0, 10, 0, 0))
-    assert led[5] == bytearray((0, 10, 0, 0))
     sys.modules["storage"].remount.side_effect = None
 
 
@@ -324,9 +263,7 @@ def test_filetransport_is_delete():
     assert ft.as_delete() == "filename.txt"
 
 
-@pytest.mark.skip
 def test_do_update_delete_file():
-    led = [bytearray((0, 0, 0, 0)) for _ in range(6)]
     patch("storage.remount")
     patch("supervisor.runtime.autoreload", new_callable=PropertyMock)
     patch("time.monotonic", side_effect=[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
@@ -353,12 +290,6 @@ def test_do_update_delete_file():
         with patch("os.unlink") as mock_unlink:
             with patch("mutenix_firmware.update.TIMEOUT_TRANSFER", 0.1):
                 with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
-                    do_update(led)
+                    do_update()
 
     mock_unlink.assert_called_once_with("filename.txt")
-    assert led[0] == bytearray((10, 0, 0, 0))
-    assert led[1] == bytearray((10, 0, 0, 0))
-    assert led[2] == bytearray((10, 0, 0, 0))
-    assert led[3] == bytearray((10, 0, 0, 0))
-    assert led[4] == bytearray((10, 0, 0, 0))
-    assert led[5] == bytearray((10, 0, 0, 0))

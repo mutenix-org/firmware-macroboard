@@ -14,7 +14,7 @@ from protocol import Reset
 from protocol import SetColor
 from protocol import Unknown
 from protocol import UpdateConfig
-from update import do_update
+
 
 COMBO_ACTIVATION_TIME = 500_000_000
 COMMUNICATION_TIMEOUT = 5.5
@@ -159,5 +159,5 @@ while True:
 
     if supervisor.runtime.usb_connected:
         if update_mode:
-            do_update(hardware_variant)
-            update_mode = False
+            supervisor.set_next_code_file("update.py")
+            supervisor.reload()

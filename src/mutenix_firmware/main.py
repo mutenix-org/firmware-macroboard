@@ -138,6 +138,7 @@ while True:
         if (time.monotonic() - last_communication) > COMMUNICATION_TIMEOUT:
             hardware_variant.leds[0] = "red"
             # hardware_variant.leds.rainbow_next()
+            hardware_variant.leds[1:] = "black"
             last_communication = 0
 
         for b in hardware_variant.buttons:

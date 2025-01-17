@@ -2,7 +2,6 @@
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import os
 import time
-from io import BufferedWriter
 
 import storage  # type: ignore
 import supervisor  # type: ignore
@@ -87,11 +86,14 @@ class File:
         self.filename, self.total_size = first_element.as_start()
         self.id = first_element.id
         self.packages = list(range(first_element.total_packages + 1))
-        self._file: BufferedWriter | None = None
+        self._file = None  # type: ignore  # noqa
 
     def write(self, data: FileTransport):
+        if data.type_ != FILE_TRANSPORT_DATA:
+            log("Not a data packet")
+            return
         if self._file is None:
-            self._file = open(self.filename, "wb")
+            self._file = open(self.filename, "wb")  # type: ignore  # noqa
         if data.package == data.total_packages:
             length = self.total_size % FileTransport.content_length
         else:
@@ -100,10 +102,10 @@ class File:
             log("Package already received")
             return
 
-        self._file.write(data.content[:length])
+        self._file.write(data.content[:length])  # type: ignore  # noqa
         self.packages.remove(data.package)
         if self.is_complete():
-            self._file.close()
+            self._file.close()  # type: ignore  # noqa
 
     def is_complete(self):
         return len(self.packages) == 0
@@ -265,6 +267,8 @@ def do_update():
             break
     led_status.success()
     supervisor.runtime.autoreload = True
+    supervisor.set_next_code_file("main.py")
+    supervisor.reload()
 
 
 do_update()

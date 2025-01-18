@@ -5,6 +5,7 @@ import time
 
 import debug_on
 import device_info
+import microcontroller
 import myhid
 import storage  # type: ignore
 import supervisor  # type: ignore
@@ -31,6 +32,10 @@ def check_boot_buttons():
         storage.disable_usb_drive()  # disable CIRCUITPY drive
 
     force_update = hardware_variant.boot_button_update_pressed()
+
+    if hardware_variant.boot_button_uf2_pressed():
+        microcontroller.on_next_reset(microcontroller.RunMode.UF2)  # type: ignore
+        microcontroller.reset()  # type: ignore
 
     if force_update:
         print("Force update")

@@ -183,9 +183,9 @@ class LedStatus:
 
     def running(self):
         if int(self.counter // 100) % 2 == 0:
-            self.led[0] = "blue"
+            self.led[0] = "purple"
         else:
-            self.led[0] = "green"
+            self.led[0] = "yellow"
         self.counter += 1
 
     def error(self):

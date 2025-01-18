@@ -130,6 +130,21 @@ def confirm_chunk(macropad, filetransport: FileTransport):
     )
 
 
+def notify_error(macropad, info: str):
+    info_bytes = info.encode()[:33]
+    data = (
+        bytearray("ER", "utf-8")
+        + len(info_bytes).to_bytes(1, "little")
+        + info_bytes
+        + b"\0" * (33 - len(info_bytes))
+    )
+
+    macropad.send_report(
+        data,
+        2,
+    )
+
+
 def send_mode(macropad):
     data = bytearray("MO", "utf-8") + (1).to_bytes(1, "little") + b"\0" * 33
 
@@ -185,15 +200,16 @@ class LedStatus:
 def do_update():
     hardware = hardware_variant
     led_status = LedStatus(hardware.leds)
+    macropad = usb_hid.devices[0]
     try:
         storage.remount("/", readonly=False)
     except RuntimeError:
         led_status.error()
+        notify_error(macropad, "filsystem")
         time.sleep(TIME_SHOW_FINAL_STATUS)
         return
     supervisor.runtime.autoreload = False
     files = {}
-    macropad = usb_hid.devices[0]
     last_transfer = time.monotonic()
     start_time = last_transfer
 

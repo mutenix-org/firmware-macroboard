@@ -1,4 +1,5 @@
 update.tar.gz
 .coverage
 dist
+filename.txt
 release/

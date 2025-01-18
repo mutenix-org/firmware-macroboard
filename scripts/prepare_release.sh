@@ -16,7 +16,6 @@ IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
 cat <<EOF > src/mutenix_firmware/version.py
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
-from __future__ import annotations
 
 MAJOR = $MAJOR
 MINOR = $MINOR

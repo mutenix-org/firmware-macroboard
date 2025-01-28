@@ -39,7 +39,7 @@ def check_boot_buttons():
 
     if force_update:
         print("Force update")
-        supervisor.set_next_code_file("updae.py")
+        supervisor.set_next_code_file("update.py")
 
 
 def do_init():

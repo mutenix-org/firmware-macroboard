@@ -198,6 +198,7 @@ class LedStatus:
 
 
 def do_update():
+    special_protected_files = ["update.py", "boot.py"]
     hardware = hardware_variant
     led_status = LedStatus(hardware.leds)
     macropad = usb_hid.devices[0]
@@ -217,6 +218,7 @@ def do_update():
 
     log("Prepared for update")
     send_mode(macropad)
+    finished = False
     while True:
         data = macropad.get_last_received_report(2)
         led_status.running()
@@ -248,6 +250,7 @@ def do_update():
                 continue
             if ft.is_finish():
                 log("Update completed")
+                finished = True
                 break
             if ft.is_end():
                 if ft.id in files:
@@ -260,28 +263,30 @@ def do_update():
                 # to ensure that we do not overwrite the update file, while updating,
                 # we fake the name here
                 files[ft.id] = File(ft)
-                if files[ft.id].filename == "update.py":
-                    files[ft.id].filename = "update.py.tmp"
+                if files[ft.id].filename in special_protected_files:
+                    files[ft.id].filename = f"{files[ft.id].filename}.tmp"
                 log("New file", files[ft.id])
             else:
                 files[ft.id].write(ft)
             log(f"{files[ft.id].filename}[{ft.id}]", ft.package, "/", ft.total_packages)
-            if files[ft.id].is_complete():
-                log("File complete, closing")
-                # we need to revert the update.py trick here, this is the critical part in the update and
-                # worst case these lines would brick the device (not really as you could enter the file mode)
-                if files[ft.id].filename == "update.py.tmp":
-                    os.rename("update.py.tmp", "update.py")
-        if time.monotonic() - last_transfer > TIMEOUT_TRANSFER:
+
+        if (
+            time.monotonic() - last_transfer > TIMEOUT_TRANSFER
+            or time.monotonic() - start_time > TIMEOUT_UPDATE
+        ):
             log("Transfer timed out")
             led_status.error()
+            time.sleep(TIME_SHOW_FINAL_STATUS)
             break
 
-        if time.monotonic() - start_time > TIMEOUT_UPDATE:
-            log("Update timed out")
-            led_status.error()
-            break
-    led_status.success()
+    if finished:
+        log("Update finished")
+        for file in os.listdir("/"):
+            if file.endswith(".tmp"):
+                # we need to revert the update.py trick here, this is the critical part in the update and
+                # worst case these lines would brick the device (not really as you could enter the file mode)
+                os.rename(file, file[:-4])
+        led_status.success()
     supervisor.runtime.autoreload = True
     supervisor.set_next_code_file("main.py")
     supervisor.reload()

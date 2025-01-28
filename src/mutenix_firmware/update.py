@@ -198,6 +198,7 @@ class LedStatus:
 
 
 def do_update():
+    special_protected_files = ["update.py", "boot.py"]
     hardware = hardware_variant
     led_status = LedStatus(hardware.leds)
     macropad = usb_hid.devices[0]
@@ -260,8 +261,8 @@ def do_update():
                 # to ensure that we do not overwrite the update file, while updating,
                 # we fake the name here
                 files[ft.id] = File(ft)
-                if files[ft.id].filename == "update.py":
-                    files[ft.id].filename = "update.py.tmp"
+                if files[ft.id].filename in special_protected_files:
+                    files[ft.id].filename = f"{files[ft.id].filename}.tmp"
                 log("New file", files[ft.id])
             else:
                 files[ft.id].write(ft)
@@ -270,8 +271,8 @@ def do_update():
                 log("File complete, closing")
                 # we need to revert the update.py trick here, this is the critical part in the update and
                 # worst case these lines would brick the device (not really as you could enter the file mode)
-                if files[ft.id].filename == "update.py.tmp":
-                    os.rename("update.py.tmp", "update.py")
+                if files[ft.id].filename.endswith(".tmp"):
+                    os.rename(files[ft.id].filename, files[ft.id].filename[:-4])
         if time.monotonic() - last_transfer > TIMEOUT_TRANSFER:
             log("Transfer timed out")
             led_status.error()

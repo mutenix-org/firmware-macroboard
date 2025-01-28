@@ -1,7 +1,7 @@
 [project]
 name = "mutenix-firmware"
 license = "MIT"
-version = "0.4.10"
+version = "0.4.11"
 description = "Firmware for the mutenix hardware."
 readme = "README.md"
 authors = [

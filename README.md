@@ -119,6 +119,11 @@ LED Pin  GP15
 LED Pin P0_20
 ```
 
+
+## Device Identification
+
+The device Identifies using `VID` `0x1d50` and `PID` `0x6189`. Thanks to [OpenMoko](https://github.com/openmoko/openmoko-usb-oui)
+
 ## Links
 
 - [Host Software](https://github.com/mutenix-org/software-host)

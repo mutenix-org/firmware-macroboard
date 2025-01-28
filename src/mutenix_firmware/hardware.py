@@ -185,6 +185,10 @@ class ColorLeds:
     def rainbow_off(self):
         self._rainbow.off()
 
+    def fill(self, color):
+        for i in range(self.count):
+            self[i] = color
+
 
 class HardwareOptions:
     """Buttons for enabling special boot modes."""

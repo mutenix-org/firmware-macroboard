@@ -14,7 +14,7 @@ sys.modules["board"] = mock.MagicMock()
 sys.modules["hardware"] = mock.Mock()  # type: ignore[attr-defined]
 hw = sys.modules["hardware"]
 hw.hardware_variant = mock.Mock()  # type: ignore[attr-defined]
-hw.hardware_variant.leds = ["black" for _ in range(13)]
+hw.hardware_variant.leds = mock.MagicMock()
 from mutenix_firmware.update import (  # noqa: E402
     FileTransport,
     FILE_TRANSPORT_START,

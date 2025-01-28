@@ -47,13 +47,16 @@ class FileTransport:
             FILE_TRANSPORT_FINISH,
         ]
 
+    def _get_filename(self):
+        filename_length = self.content[0]
+        filename = self.content[1 : 1 + filename_length].decode("utf-8")
+        log("Filename[", filename_length, "]:", filename)
+        return filename_length, filename
+
     def as_start(self) -> tuple[str, int]:
         if self.type_ != FILE_TRANSPORT_START:
             raise ValueError("Not a start packet")
-        filename_length = self.content[0]
-        log("Filename length", filename_length)
-        filename = self.content[1 : 1 + filename_length].decode("utf-8")
-        log("Filename", filename)
+        filename_length, filename = self._get_filename()
         size_length = self.content[1 + filename_length]
         total_size = int.from_bytes(
             self.content[2 + filename_length : 2 + filename_length + size_length],
@@ -64,10 +67,7 @@ class FileTransport:
     def as_delete(self) -> str:
         if self.type_ != FILE_TRANSPORT_DELETE:
             raise ValueError("Not a delete packet")
-        filename_length = self.content[0]
-        log("Filename length", filename_length)
-        filename = self.content[1 : 1 + filename_length].decode("utf-8")
-        return filename
+        return self._get_filename()[1]
 
     def is_end(self):
         return self.type_ == FILE_TRANSPORT_END
@@ -78,10 +78,16 @@ class FileTransport:
     def is_delete(self):
         return self.type_ == FILE_TRANSPORT_DELETE
 
+    def is_start(self):
+        return self.type_ == FILE_TRANSPORT_START
+
+    def is_data(self):
+        return self.type_ == FILE_TRANSPORT_DATA
+
 
 class File:
     def __init__(self, first_element: FileTransport):
-        if first_element.type_ != FILE_TRANSPORT_START:
+        if not first_element.is_start():
             raise ValueError("First element must be start")
         self.filename, self.total_size = first_element.as_start()
         self.id = first_element.id
@@ -89,7 +95,7 @@ class File:
         self._file = None  # type: ignore  # noqa
 
     def write(self, data: FileTransport):
-        if data.type_ != FILE_TRANSPORT_DATA:
+        if not data.is_data():
             log("Not a data packet")
             return
         if self._file is None:
@@ -114,45 +120,36 @@ class File:
         return f"File: {self.filename}, Size: {self.total_size}, Missing: {len(self.packages)}"
 
 
-def confirm_chunk(macropad, filetransport: FileTransport):
-    data = (
-        bytearray("AK", "utf-8")
-        + filetransport.id.to_bytes(2, "little")
-        + filetransport.package.to_bytes(2, "little")
-        + filetransport.type_.to_bytes(1, "little")
-        + b"\0" * 29
-    )
-
-    log("Confirming chunk", filetransport.package, len(data))
+def send_report(macropad, data: bytearray):
+    data = data + b"\0" * (36 - len(data))
     macropad.send_report(
         data,
         2,
+    )
+
+
+def confirm_chunk(macropad, filetransport: FileTransport):
+    send_report(
+        macropad,
+        (
+            bytearray("AK", "utf-8")
+            + filetransport.id.to_bytes(2, "little")
+            + filetransport.package.to_bytes(2, "little")
+            + filetransport.type_.to_bytes(1, "little")
+        ),
     )
 
 
 def notify_error(macropad, info: str):
     info_bytes = info.encode()[:33]
-    data = (
-        bytearray("ER", "utf-8")
-        + len(info_bytes).to_bytes(1, "little")
-        + info_bytes
-        + b"\0" * (33 - len(info_bytes))
-    )
-
-    macropad.send_report(
-        data,
-        2,
+    send_report(
+        macropad,
+        (bytearray("ER", "utf-8") + len(info_bytes).to_bytes(1, "little") + info_bytes),
     )
 
 
 def send_mode(macropad):
-    data = bytearray("MO", "utf-8") + (1).to_bytes(1, "little") + b"\0" * 33
-
-    log("Send Mode")
-    macropad.send_report(
-        data,
-        2,
-    )
+    send_report(macropad, bytearray("MO", "utf-8") + (1).to_bytes(1, "little"))
 
 
 class LedStatus:
@@ -162,39 +159,25 @@ class LedStatus:
         self.counter = 0
 
     def update(self):
-        self.led_status += 1
-        if self.led_status >= 100:
-            self.led_status = 0
+        self.led_status = (self.led_status + 1) % 100
         for i in range(1, len(self.led)):
-            if self.led_status // 10 == (i - 1):
-                self.led[i] = mix_color(
-                    "blue",
-                    "green",
-                    self.led_status % 10,
-                    10,
+            if self.led_status // 10 in [(i - 1), (i - 1 + 5)]:
+                color1, color2 = (
+                    ("blue", "green")
+                    if self.led_status // 10 == (i - 1)
+                    else ("green", "blue")
                 )
-            if self.led_status // 10 == (i - 1 + 5):
-                self.led[i] = mix_color(
-                    "green",
-                    "blue",
-                    self.led_status % 10,
-                    10,
-                )
+                self.led[i] = mix_color(color1, color2, self.led_status % 10, 10)
 
     def running(self):
-        if int(self.counter // 100) % 2 == 0:
-            self.led[0] = "purple"
-        else:
-            self.led[0] = "yellow"
+        self.led[0] = "purple" if (self.counter // 100) % 2 == 0 else "yellow"
         self.counter += 1
 
     def error(self):
-        for i in range(0, len(self.led)):
-            self.led[i] = "red"
+        self.led.fill("red")
 
     def success(self):
-        for i in range(0, len(self.led)):
-            self.led[i] = "green"
+        self.led.fill("green")
 
 
 def do_update():
@@ -275,6 +258,7 @@ def do_update():
             or time.monotonic() - start_time > TIMEOUT_UPDATE
         ):
             log("Transfer timed out")
+            notify_error(macropad, "timeout")
             led_status.error()
             time.sleep(TIME_SHOW_FINAL_STATUS)
             break

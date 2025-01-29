@@ -2,6 +2,7 @@
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import time
 
+import storage
 import supervisor  # type: ignore
 import usb_hid  # type: ignore
 from hardware import hardware_variant
@@ -33,6 +34,10 @@ last_communication: float = 0.0
 
 
 def update_config(update):
+    try:
+        storage.remount("/", readonly=False)
+    except RuntimeError:
+        return
     with open("/debug_on.py", "r") as f:
         lines = f.readlines()
 
@@ -42,7 +47,7 @@ def update_config(update):
                 f.write(line)
                 continue
             name, value = map(str.strip, line.split("="))
-            if name == "debug" and update.update_debug is not None:
+            if name in ["serial", "debug"] and update.update_debug is not None:
                 value = str(update.activate_debug)
             if name == "filesystem" and update.update_filesystem is not None:
                 value = str(update.activate_filesystem)
@@ -121,7 +126,6 @@ while True:
             log(f"USB receiving not working, but who cares {e}")
     try:
         if data:
-            # hardware_variant.leds.rainbow_off()
             if last_communication == 0:
                 if hardware_variant.bluetooth_connected:
                     log("send bt")
@@ -154,7 +158,7 @@ while True:
         combos.check()
 
     except OSError as e:
-        log(f"USB send not working, but who cares {e}")
+        log(f"USB send {e}")
 
     hardware_variant.check_bluetooth()
 

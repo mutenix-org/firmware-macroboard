@@ -350,7 +350,7 @@ class HardwareOptions:
             firmware_revision=os.uname().version,
             software_revision=f"{version.MAJOR}.{version.MINOR}.{version.PATCH}",
             manufacturer=device_info.MANUFACTURER,
-            pnp_id=(0x01, device_info.VID, device_info.PID, 0x0001),
+            pnp_id=(0x02, device_info.VID, device_info.PID, 0x0001),
         )
         self._batteryservice = BatteryService()
         self._batteryservice.level = self._battery_level
@@ -398,6 +398,18 @@ class HardwareOptions:
                 self._hid.devices,
             ),
         )
+        self._update_communication_out = next(
+            filter(
+                lambda x: isinstance(x, ReportOut) and x._report_id == 2,
+                self._hid.devices,
+            ),
+        )
+        self._update_communication_in = next(
+            filter(
+                lambda x: isinstance(x, ReportIn) and x._report_id == 2,
+                self._hid.devices,
+            ),
+        )
 
     def read_bluetooth_hid(self):
         new_value = self._hid_communication_out.report
@@ -408,7 +420,9 @@ class HardwareOptions:
 
     def send_bluetooth_hid(self, data):
         self._hid_communication_in.send_report(data)
-        pass
+
+    def send_bluetooth_update(self, data):
+        self._update_communication_in.send_report(data)
 
     @property
     def bluetooth_connected(self):

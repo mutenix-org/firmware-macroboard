@@ -2,7 +2,7 @@
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
 import time
 
-import storage
+import storage  # type: ignore
 import supervisor  # type: ignore
 import usb_hid  # type: ignore
 from hardware import hardware_variant

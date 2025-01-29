@@ -19,7 +19,7 @@ FILE_TRANSPORT_DELETE = 5
 CHUNK_SIZE = 60
 HEADER_SIZE = 8
 
-TIMEOUT_TRANSFER = 10
+TIMEOUT_TRANSFER = 30
 TIMEOUT_UPDATE = 180
 TIME_SHOW_FINAL_STATUS = 4
 TIMEOUT_TRANSFER_REQUEST = 1
@@ -121,7 +121,9 @@ class File:
 
 
 def send_report(macropad, data: bytearray):
+    log("Add Padding: ", 36 - len(data))
     data = data + b"\0" * (36 - len(data))
+    log("Send Report: ", data)
     macropad.send_report(
         data,
         2,
@@ -181,10 +183,13 @@ class LedStatus:
 
 
 def do_update():
+    log("Starting update")
     special_protected_files = ["update.py", "boot.py"]
     hardware = hardware_variant
+    log("Setup LEDs")
     led_status = LedStatus(hardware.leds)
     macropad = usb_hid.devices[0]
+    log("Mount Storage")
     try:
         storage.remount("/", readonly=False)
     except RuntimeError:
@@ -192,6 +197,7 @@ def do_update():
         notify_error(macropad, "filsystem")
         time.sleep(TIME_SHOW_FINAL_STATUS)
         return
+    log("Disable Autoreload")
     supervisor.runtime.autoreload = False
     files = {}
     last_transfer = time.monotonic()
@@ -200,7 +206,10 @@ def do_update():
     invalid_data_ignore_counter = 5
 
     log("Prepared for update")
-    send_mode(macropad)
+    try:
+        send_mode(macropad)
+    except Exception as e:
+        log(f"Failed to send mode {e}")
     finished = False
     while True:
         data = macropad.get_last_received_report(2)

@@ -69,7 +69,7 @@ MACROBOARD_DESCRIPTOR2 = bytes(
         0xFF,
         0x00,  # LogicalMaximum(255)
         0x96,
-        0x60,
+        0x3C,
         0x00,  # ReportCount
         0x75,
         0x08,  # ReportSize(8 bit)

@@ -204,6 +204,11 @@ class HardwareOptions:
         self._ble_advertising = False
         self._last_read = None
         self._battery_level = 10
+        self._update_communication_in = None
+        self._update_communication_out = None
+        self._hid_communication_in = None
+        self._hid_communication_out = None
+        self._precvious_bl_led_state = None
         self._setup_hardware_config()
         self._set_buttons()
         self._init_leds()
@@ -378,12 +383,13 @@ class HardwareOptions:
             self._ble_advertising = False
 
         if self._bluetooth.connected:
-            self.leds[11] = "green"
-
+            ledcolor = "green"
         elif self._bluetooth.advertising:
-            self.leds[11] = "blue"
+            ledcolor = "blue"
         else:
-            self.leds[11] = "red"
+            ledcolor = "red"
+        if ledcolor != self._precvious_bl_led_state:
+            self.leds[11] = ledcolor
 
     def _setup_hid_endpoints(self):
         self._hid_communication_out = next(
@@ -422,7 +428,8 @@ class HardwareOptions:
         self._hid_communication_in.send_report(data)
 
     def send_bluetooth_update(self, data):
-        self._update_communication_in.send_report(data)
+        if self._update_communication_in:
+            self._update_communication_in.send_report(data)
 
     @property
     def bluetooth_connected(self):

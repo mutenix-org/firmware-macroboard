@@ -15,6 +15,10 @@ class EventTime:
         self._current = value or time.monotonic()
         self.triggered += 1
 
+    def reset(self):
+        self._last = self._current
+        self.triggered = 0
+
     @property
     def diff(self):
         return self._current - self._last if self.triggered >= 2 else float("inf")

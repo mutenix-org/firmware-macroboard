@@ -134,7 +134,7 @@ class InMessage:
                 cls.STATUS,
                 button.id,
                 button.triggered,
-                button.doubletapped,
+                button.longpressed,
                 button.pressed,
                 button.released,
                 button.counter,

@@ -7,6 +7,7 @@ import supervisor  # type: ignore
 import usb_hid  # type: ignore
 from hardware import hardware_variant
 from log import log
+from log import log_error
 from protocol import InMessage
 from protocol import OutMessage
 from protocol import Ping
@@ -54,11 +55,20 @@ def update_config(update):
             f.write(f"{name} = {value}\n")
 
 
+def send_message(message):
+    if hardware_variant.bluetooth_connected:
+        log("send bt")
+        hardware_variant.send_bluetooth_hid(message._data)
+    elif supervisor.runtime.usb_connected:
+        log("send usb")
+        message.send(macropad)
+
+
 def handle_received_report(data):
     log("Data received")
     p = OutMessage.from_buffer(data)
     if isinstance(p, Ping):
-        InMessage.initialize().send(macropad)
+        send_message(InMessage.initialize())
         log("ping")
     elif isinstance(p, SetColor):
         if p.buttonid < 6 and p.buttonid >= 1:
@@ -116,25 +126,18 @@ while True:
             if data:
                 log("data from bt", data)
         except Exception as e:
-            log(f"Bluetooth receiving not working, but who cares {e}")
+            log_error(f"Bluetooth receiving not working, but who cares {e}")
     elif supervisor.runtime.usb_connected:
         try:
             data = macropad.get_last_received_report(1)
             if data:
                 log("data from usb", data)
         except Exception as e:
-            log(f"USB receiving not working, but who cares {e}")
+            log_error(f"USB receiving not working, but who cares {e}")
     try:
         if data:
             if last_communication == 0:
-                if hardware_variant.bluetooth_connected:
-                    log("send bt")
-                    hardware_variant.send_bluetooth_hid(
-                        InMessage.status_request()._data,
-                    )
-                elif supervisor.runtime.usb_connected:
-                    log("send usb")
-                    InMessage.status_request().send(macropad)
+                send_message(InMessage.status_request())
             last_communication = time.monotonic()
             handle_received_report(data)
             hardware_variant.leds[0] = "green"
@@ -149,16 +152,11 @@ while True:
             b.read()
             if b.changed_state:
                 log(f"Button {b._pin} changed")
-                if hardware_variant.bluetooth_connected:
-                    log("send bt")
-                    hardware_variant.send_bluetooth_hid(InMessage.button(b)._data)
-                elif supervisor.runtime.usb_connected:
-                    log("send usb")
-                    InMessage.button(b).send(macropad)
+                send_message(InMessage.button(b))
         combos.check()
 
     except OSError as e:
-        log(f"USB send {e}")
+        log_error(f"USB send {e}")
 
     hardware_variant.check_bluetooth()
 

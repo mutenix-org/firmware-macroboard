@@ -68,7 +68,7 @@ def test_inmessage_button():
     button = mock.Mock(spec=Button)
     button.id = 1
     button.triggered = True
-    button.doubletapped = False
+    button.longpressed = False
     button.pressed = True
     button.released = False
     button.counter = 1

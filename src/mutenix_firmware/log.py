@@ -5,8 +5,16 @@ import hardware
 
 
 def log(*args, **kwargs):
-    if debug_on.debug:
-        print(*args, **kwargs)
+    if not debug_on.debug:
+        return
+    print(*args, **kwargs)
     if hardware.hardware_variant.has_bluetooth:
-        text = " ".join(map(str, args)) + " " * 36
+        text = "LD" + " ".join(map(str, args)) + " " * 36
+        hardware.hardware_variant.send_bluetooth_update(text[:36])
+
+
+def log_error(*args, **kwargs):
+    print(*args, **kwargs)
+    if hardware.hardware_variant.has_bluetooth:
+        text = "LE" + " ".join(map(str, args)) + " " * 36
         hardware.hardware_variant.send_bluetooth_update(text[:36])

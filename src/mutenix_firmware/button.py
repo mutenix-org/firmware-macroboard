@@ -3,7 +3,7 @@
 import digitalio  # type: ignore
 from utils import EventTime
 
-DOUBLETAP_TIME_MS = 200
+LONGPRESS_TIME_MS = 400
 
 
 class Button:
@@ -12,7 +12,7 @@ class Button:
         self._pin.direction = digitalio.Direction.INPUT
         self._pin.pull = digitalio.Pull.UP
         self._state = not self._pin.value
-        self._doubletap = False
+        self._longpress = False
         self._pressed = self._state
         self._released = not self._state
         self._triggered = False
@@ -31,9 +31,9 @@ class Button:
         return self._id
 
     @property
-    def doubletapped(self):
+    def longpressed(self):
         difftime = self._pushEventTime.diff
-        return difftime < DOUBLETAP_TIME_MS / 1000.0
+        return difftime < LONGPRESS_TIME_MS / 1000.0
 
     def read(self):
         value = not self._pin.value
@@ -42,11 +42,13 @@ class Button:
             self._state = value
             if value:
                 self._pushEventTime.trigger()
+                self._pushEventTime.reset()
                 self._pressed = True
                 self._released = False
                 self._press_handled = False
                 self._counter += 1
             else:
+                self._pushEventTime.trigger()
                 self._released = True
                 self._pressed = False
                 if not self._press_handled:

@@ -34,7 +34,7 @@ def test_button_initialization(mock_digitalio, mock_eventtime):
     button = Button(id=1, pin=pin)
     assert button.id == 1
     assert button.state != mock_digitalio.return_value.value
-    assert not button.doubletapped
+    assert not button.longpressed
 
 
 def test_button_read(mock_digitalio, mock_eventtime):

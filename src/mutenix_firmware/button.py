@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2025 Matthias Bilger <matthias@bilger.info>
+import time
+
 import digitalio  # type: ignore
-from utils import EventTime
 
 LONGPRESS_TIME_MS = 400
 
@@ -16,9 +17,8 @@ class Button:
         self._pressed = self._state
         self._released = not self._state
         self._triggered = False
-        self._press_handled = False
         self._changed_state = False
-        self._pushEventTime = EventTime()
+        self._last = 0.0
         self._id = id
         self._counter = 0
 
@@ -32,8 +32,7 @@ class Button:
 
     @property
     def longpressed(self):
-        difftime = self._pushEventTime.diff
-        return difftime < LONGPRESS_TIME_MS / 1000.0
+        return self._longpress
 
     def read(self):
         value = not self._pin.value
@@ -41,18 +40,18 @@ class Button:
             self._changed_state = True
             self._state = value
             if value:
-                self._pushEventTime.trigger()
-                self._pushEventTime.reset()
+                self._last = time.monotonic()
+                self._longpress = False
                 self._pressed = True
                 self._released = False
-                self._press_handled = False
                 self._counter += 1
             else:
-                self._pushEventTime.trigger()
+                self._longpress = (
+                    self._last + LONGPRESS_TIME_MS / 1000 < time.monotonic()
+                )
                 self._released = True
                 self._pressed = False
-                if not self._press_handled:
-                    self._triggered = True
+                self._triggered = True
         return self._pressed
 
     @property
@@ -80,6 +79,3 @@ class Button:
     @property
     def counter(self):
         return self._counter
-
-    def handled(self):
-        self._press_handled = True

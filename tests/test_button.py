@@ -23,13 +23,7 @@ def mock_digitalio():
         yield mock_digitalinout
 
 
-@pytest.fixture
-def mock_eventtime():
-    with mock.patch("utils.EventTime") as mock_eventtime:
-        yield mock_eventtime
-
-
-def test_button_initialization(mock_digitalio, mock_eventtime):
+def test_button_initialization(mock_digitalio):
     pin = mock.Mock()
     button = Button(id=1, pin=pin)
     assert button.id == 1
@@ -37,7 +31,7 @@ def test_button_initialization(mock_digitalio, mock_eventtime):
     assert not button.longpressed
 
 
-def test_button_read(mock_digitalio, mock_eventtime):
+def test_button_read(mock_digitalio):
     pin_mock = mock.Mock()
     pin_mock.value = True
     mock_digitalio.return_value = pin_mock
@@ -49,7 +43,7 @@ def test_button_read(mock_digitalio, mock_eventtime):
     assert button.changed_state
 
 
-def test_button_triggered(mock_digitalio, mock_eventtime):
+def test_button_triggered(mock_digitalio):
     pin_mock = mock.Mock()
     pin_mock.value = False
     mock_digitalio.return_value = pin_mock

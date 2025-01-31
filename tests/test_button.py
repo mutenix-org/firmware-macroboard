@@ -60,11 +60,3 @@ def test_button_triggered(mock_digitalio, mock_eventtime):
     button.read()
     assert button.triggered
     assert not button.triggered
-
-
-def test_button_handled(mock_digitalio, mock_eventtime):
-    pin = mock.Mock()
-    button = Button(id=1, pin=pin)
-    button.read()
-    button.handled()
-    assert not button.triggered

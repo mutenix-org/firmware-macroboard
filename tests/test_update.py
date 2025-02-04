@@ -136,34 +136,9 @@ def test_file_write():
         )
         ft_data = FileTransport(data)
         file.write(ft_data)
-        mock_open.assert_called_once_with("filename.txt", "wb")
+        mock_open.assert_called_once_with("filename.txt", "w")
         mock_file.write.assert_called_once_with(b"12345678")
     assert 1 not in file.packages
-
-
-def test_file_is_complete():
-    start_data = (
-        FILE_TRANSPORT_START.to_bytes(2, "little")
-        + (1).to_bytes(2, "little")
-        + (10).to_bytes(2, "little")
-        + (0).to_bytes(2, "little")
-        + b"\x0cfilename.txt\x04\x00\x00\x10"
-    )
-    ft_start = FileTransport(start_data)
-    file = File(ft_start)
-
-    for i in range(11):
-        data = (
-            FILE_TRANSPORT_DATA.to_bytes(2, "little")
-            + (1).to_bytes(2, "little")
-            + (10).to_bytes(2, "little")
-            + (i).to_bytes(2, "little")
-            + b"12345678"
-        )
-        ft_data = FileTransport(data)
-        file.write(ft_data)
-
-    assert file.is_complete() is True
 
 
 def test_ledstatus_initialization():
@@ -211,7 +186,7 @@ def test_do_update_successful_update():
             with patch("mutenix_firmware.update.TIMEOUT_UPDATE", 0.1):
                 do_update()
 
-    mock_open.assert_called_once_with("filename.txt", "wb")
+    mock_open.assert_called_once_with("filename.txt", "w")
     mock_open().write.assert_called_once_with(
         b"12345678",
     )

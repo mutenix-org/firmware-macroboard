@@ -100,7 +100,7 @@ class File:
             log("Not a data packet")
             return
         if self._file is None:
-            self._file = open(self.filename, "wb")  # type: ignore  # noqa
+            self._file = open(self.filename, "w")  # type: ignore  # noqa
         if data.package == data.total_packages:
             length = self.remaining
         else:
@@ -110,7 +110,7 @@ class File:
             return
 
         self.remaining -= length
-
+        data.content = data.content[:length].strip(b"\0")
         self._file.write(data.content[:length])  # type: ignore  # noqa
         self.packages.remove(data.package)
         if self.is_complete():

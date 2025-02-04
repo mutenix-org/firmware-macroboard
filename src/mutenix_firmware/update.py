@@ -90,6 +90,7 @@ class File:
         if not first_element.is_start():
             raise ValueError("First element must be start")
         self.filename, self.total_size = first_element.as_start()
+        self.remaining = self.total_size
         self.id = first_element.id
         self.packages = list(range(first_element.total_packages + 1))
         self._file = None  # type: ignore  # noqa
@@ -101,12 +102,14 @@ class File:
         if self._file is None:
             self._file = open(self.filename, "wb")  # type: ignore  # noqa
         if data.package == data.total_packages:
-            length = self.total_size % FileTransport.content_length
+            length = self.remaining
         else:
             length = FileTransport.content_length
         if data.package not in self.packages:
             log("Package already received")
             return
+
+        self.remaining -= length
 
         self._file.write(data.content[:length])  # type: ignore  # noqa
         self.packages.remove(data.package)

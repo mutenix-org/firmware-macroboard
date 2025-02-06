@@ -71,7 +71,10 @@ def handle_received_report(data):
         send_message(InMessage.initialize())
         log("ping")
     elif isinstance(p, SetColor):
-        if p.buttonid < 6 and p.buttonid >= 1:
+        if p.buttonid >= 1 and (
+            p.buttonid < 6
+            or (hardware_variant.is_ten_button_variant and p.buttonid < 11)
+        ):
             hardware_variant.leds[p.buttonid] = p.color
         log(f"led {p.buttonid} set to {p.color}")
     elif isinstance(p, PrepareUpdate):
@@ -145,7 +148,7 @@ while True:
         if (time.monotonic() - last_communication) > COMMUNICATION_TIMEOUT:
             hardware_variant.leds[0] = "red"
             # hardware_variant.leds.rainbow_next()
-            hardware_variant.leds[1:] = "black"
+            hardware_variant.leds[1:11] = "black"
             last_communication = 0
 
         for b in hardware_variant.buttons:
@@ -160,7 +163,6 @@ while True:
 
     hardware_variant.check_bluetooth()
 
-    if supervisor.runtime.usb_connected:
-        if update_mode:
-            supervisor.set_next_code_file("update.py")
-            supervisor.reload()
+    if update_mode:
+        supervisor.set_next_code_file("update.py")
+        supervisor.reload()

@@ -441,5 +441,9 @@ class HardwareOptions:
         self._battery_level = value
         self._batteryservice.level = self._battery_level
 
+    @property
+    def is_ten_button_variant(self):
+        return self.hardware_variant in [TEN_BUTTON_BT, TEN_BUTTON_USB_V2]
+
 
 hardware_variant = HardwareOptions()

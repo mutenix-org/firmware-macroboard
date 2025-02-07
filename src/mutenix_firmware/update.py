@@ -92,7 +92,7 @@ class File:
         self.filename, self.total_size = first_element.as_start()
         self.remaining = self.total_size
         self.id = first_element.id
-        self.packages = list(range(first_element.total_packages + 1))
+        self.packages = list(range(first_element.total_packages))
         self._file = None  # type: ignore  # noqa
 
     def write(self, data: FileTransport):
@@ -101,7 +101,7 @@ class File:
             return
         if self._file is None:
             self._file = open(self.filename, "wb")  # type: ignore  # noqa
-        if data.package == data.total_packages:
+        if data.package == data.total_packages - 1:
             length = self.remaining
         else:
             length = FileTransport.content_length
@@ -110,6 +110,7 @@ class File:
             return
 
         self.remaining -= length
+        log(f"Writing {length} bytes to {self.filename} remaining {self.remaining}")
 
         self._file.write(data.content[:length])  # type: ignore  # noqa
         self.packages.remove(data.package)
@@ -124,7 +125,6 @@ class File:
 
 
 def send_report(macropad, data: bytearray):
-    log("Add Padding: ", 36 - len(data))
     data = data + b"\0" * (36 - len(data))
     log("Send Report: ", data)
     macropad.send_report(
@@ -236,8 +236,8 @@ def do_update():
             last_transfer = time.monotonic()
             led_status.update()
             if ft.is_delete():
-                log("Delete file {ft.name}")
                 filename = ft.as_delete()
+                log(f"Delete file {filename}")
                 try:
                     os.unlink(filename)
                 except OSError:

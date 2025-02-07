@@ -110,7 +110,7 @@ def test_file_initialization():
     assert file.filename == "filename.txt"
     assert file.total_size == 1048576
     assert file.id == 1
-    assert file.packages == list(range(11))
+    assert file.packages == list(range(10))
 
 
 def test_file_write():
@@ -184,12 +184,12 @@ def test_do_update_successful_update():
             None,
             FILE_TRANSPORT_START.to_bytes(2, "little")
             + (1).to_bytes(2, "little")
-            + (0).to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
             + (0).to_bytes(2, "little")
             + b"\x0cfilename.txt\x04\x08\x00\x00\x00",
             FILE_TRANSPORT_DATA.to_bytes(2, "little")
             + (1).to_bytes(2, "little")
-            + (0).to_bytes(2, "little")
+            + (1).to_bytes(2, "little")
             + (0).to_bytes(2, "little")
             + b"12345678",
             FILE_TRANSPORT_END.to_bytes(2, "little")
